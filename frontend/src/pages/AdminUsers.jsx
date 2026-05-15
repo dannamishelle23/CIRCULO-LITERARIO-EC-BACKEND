@@ -1,25 +1,36 @@
 import { useEffect, useState } from "react";
 import {
-  getUsers,
+  getModerators,
+  suspendModerator,
+  blockUser,
   deleteUser,
-  changeRole,
-  blockUser
+  reactivateUser
 } from "../services/userService";
 
 import {
-  FaTrash,
-  FaUserLock,
   FaUsersCog
 } from "react-icons/fa";
 
 export default function AdminUsers() {
+
   const [users, setUsers] = useState([]);
+
+  const usuarioLogueado = JSON.parse(
+    localStorage.getItem("usuario")
+  );
+
+  const esAdministrador =
+    usuarioLogueado?.rol === "Administrador";
 
   /* OBTENER USUARIOS */
   const fetchUsers = async () => {
     try {
-      const data = await getUsers();
+
+      // POR AHORA SOLO LISTAR MODERADORES
+      const data = await getModerators();
+
       setUsers(data);
+
     } catch (error) {
       console.error(error);
     }
@@ -29,27 +40,41 @@ export default function AdminUsers() {
     fetchUsers();
   }, []);
 
-  /* CAMBIAR ROL */
-  const handleRoleChange = async (id, role) => {
+  /* SUSPENDER MODERADOR */
+  const handleSuspendModerator = async (id) => {
+
+    const confirmSuspend = window.confirm(
+      "¿Deseas suspender este moderador?"
+    );
+
+    if (!confirmSuspend) return;
+
     try {
-      await changeRole(id, role);
+
+      await suspendModerator(id);
+
       fetchUsers();
+
     } catch (error) {
       console.error(error);
     }
   };
 
-  /* BLOQUEAR */
+  /* SUSPENDER USUARIO */
   const handleBlock = async (id) => {
+
     const confirmBlock = window.confirm(
-      "¿Deseas bloquear este usuario?"
+      "¿Deseas suspender este usuario?"
     );
 
     if (!confirmBlock) return;
 
     try {
+
       await blockUser(id);
+
       fetchUsers();
+
     } catch (error) {
       console.error(error);
     }
@@ -57,6 +82,7 @@ export default function AdminUsers() {
 
   /* ELIMINAR */
   const handleDelete = async (id) => {
+
     const confirmDelete = window.confirm(
       "¿Deseas eliminar este usuario?"
     );
@@ -64,8 +90,31 @@ export default function AdminUsers() {
     if (!confirmDelete) return;
 
     try {
+
       await deleteUser(id);
+
       fetchUsers();
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  /* REACTIVAR */
+  const handleReactivate = async (id) => {
+
+    const confirmReactivate = window.confirm(
+      "¿Deseas reactivar este usuario?"
+    );
+
+    if (!confirmReactivate) return;
+
+    try {
+
+      await reactivateUser(id);
+
+      fetchUsers();
+
     } catch (error) {
       console.error(error);
     }
@@ -73,24 +122,32 @@ export default function AdminUsers() {
 
   /* FILTRAR USUARIOS */
   const moderadores = users.filter(
-    (user) => user.role === "Moderador"
+    (user) => user.rol === "Moderador"
   );
 
   const lectoresAutores = users.filter(
-    (user) => user.role === "Usuario"
+    (user) => user.rol === "Usuario"
   );
 
   /* TABLA REUTILIZABLE */
   const renderTable = (title, data) => (
+
     <div className="bg-white rounded-3xl shadow-xl overflow-hidden mb-10">
+
       <div className="bg-amber-700 text-white px-6 py-4">
-        <h2 className="text-2xl font-bold">{title}</h2>
+        <h2 className="text-2xl font-bold">
+          {title}
+        </h2>
       </div>
 
       <div className="overflow-x-auto">
+
         <table className="min-w-full">
+
           <thead className="bg-amber-100">
+
             <tr>
+
               <th className="px-6 py-4 text-left">
                 Usuario
               </th>
@@ -110,11 +167,15 @@ export default function AdminUsers() {
               <th className="px-6 py-4 text-center">
                 Acciones
               </th>
+
             </tr>
+
           </thead>
 
           <tbody>
+
             {data.length === 0 ? (
+
               <tr>
                 <td
                   colSpan="5"
@@ -123,16 +184,20 @@ export default function AdminUsers() {
                   No hay usuarios en esta sección
                 </td>
               </tr>
+
             ) : (
+
               data.map((user) => (
+
                 <tr
                   key={user._id}
                   className="border-b border-slate-200 hover:bg-amber-50 transition"
                 >
+
                   {/* NOMBRE */}
                   <td className="px-6 py-5">
                     <p className="font-bold text-[#2c3e50]">
-                      {user.name}
+                      {user.nombres} {user.apellidos}
                     </p>
                   </td>
 
@@ -143,88 +208,114 @@ export default function AdminUsers() {
 
                   {/* ROL */}
                   <td className="px-6 py-5">
-                    <select
-                      value={user.role}
-                      onChange={(e) =>
-                        handleRoleChange(
-                          user._id,
-                          e.target.value
-                        )
-                      }
-                      className="border border-slate-300 rounded-xl px-4 py-2"
-                    >
-                      <option value="Usuario">
-                        Lector / Autor
-                      </option>
 
-                      <option value="Moderador">
-                        Moderador
-                      </option>
+                    <span className="bg-amber-100 text-amber-700 px-4 py-2 rounded-full text-sm font-semibold">
+                      {user.rol}
+                    </span>
 
-                      <option value="Administrador">
-                        Administrador
-                      </option>
-                    </select>
                   </td>
 
                   {/* ESTADO */}
                   <td className="px-6 py-5 text-center">
+
                     <span
                       className={
-                        user.blocked
+                        user.estadoUsuario === "Suspendido"
                           ? "bg-red-100 text-red-600 px-4 py-2 rounded-full text-sm font-semibold"
                           : "bg-green-100 text-green-600 px-4 py-2 rounded-full text-sm font-semibold"
                       }
                     >
-                      {user.blocked
-                        ? "Bloqueado"
-                        : "Activo"}
+                      {user.estadoUsuario}
                     </span>
+
                   </td>
 
                   {/* ACCIONES */}
                   <td className="px-6 py-5">
-                    <div className="flex justify-center gap-3">
-                      <button
-                        onClick={() =>
-                          handleBlock(user._id)
-                        }
-                        className="bg-orange-500 hover:bg-orange-400 text-white p-3 rounded-xl transition"
-                      >
-                        <FaUserLock />
-                      </button>
 
-                      <button
-                        onClick={() =>
-                          handleDelete(user._id)
-                        }
-                        className="bg-red-500 hover:bg-red-400 text-white p-3 rounded-xl transition"
-                      >
-                        <FaTrash />
-                      </button>
+                    <div className="flex justify-center gap-3">
+
+                      {/* SUSPENDER */}
+                      {user.estadoUsuario === "Activo" &&
+                        user._id !== usuarioLogueado._id && (
+
+                          <button
+                            onClick={() =>
+                              user.rol === "Moderador"
+                                ? handleSuspendModerator(user._id)
+                                : handleBlock(user._id)
+                            }
+                            className="bg-orange-500 hover:bg-orange-400 text-white px-4 py-2 rounded-xl transition"
+                          >
+                            Suspender
+                          </button>
+                        )}
+
+                      {/* REACTIVAR */}
+                      {user.estadoUsuario === "Suspendido" && (
+
+                        <button
+                          onClick={() =>
+                            handleReactivate(user._id)
+                          }
+                          className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl transition"
+                        >
+                          Reactivar
+                        </button>
+
+                      )}
+
+                      {/* ELIMINAR SOLO USUARIOS LECTOR/AUTOR (LO HACE SOLO EL ADMINISTRADOR)*/}
+                      {esAdministrador &&
+                        user.rol === "Usuario" &&
+                        user._id !== usuarioLogueado._id && (
+
+                          <button
+                            onClick={() =>
+                              handleDelete(user._id)
+                            }
+                            className="bg-red-500 hover:bg-red-400 text-white px-4 py-2 rounded-xl transition"
+                          >
+                            Eliminar
+                          </button>
+
+                      )}
+
                     </div>
+
                   </td>
+
                 </tr>
+
               ))
             )}
+
           </tbody>
+
         </table>
+
       </div>
+
     </div>
   );
 
   return (
+
     <section className="min-h-screen bg-[#FEF2E1] py-12 px-6">
+
       <div className="max-w-7xl mx-auto">
 
         {/* HEADER */}
         <div className="bg-white rounded-3xl shadow-xl p-8 mb-8">
+
           <div className="flex items-center gap-4">
+
             <div className="bg-amber-100 p-5 rounded-2xl">
               <FaUsersCog className="text-5xl text-amber-700" />
             </div>
 
             <div>
+
               <h1 className="text-4xl font-black text-[#2c3e50]">
                 Panel Administrativo
               </h1>
@@ -232,23 +323,27 @@ export default function AdminUsers() {
               <p className="text-slate-500 mt-2">
                 Gestiona moderadores y usuarios del sistema
               </p>
+
             </div>
+
           </div>
+
         </div>
 
-        {/* SECCIÓN MODERADORES */}
+        {/* MODERADORES */}
         {renderTable(
           "Gestión de Moderadores",
           moderadores
         )}
 
-        {/* SECCIÓN LECTORES/AUTORES */}
+        {/* USUARIOS */}
         {renderTable(
           "Gestión de Lectores y Autores",
           lectoresAutores
         )}
 
       </div>
+
     </section>
   );
 }
