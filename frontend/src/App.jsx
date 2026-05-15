@@ -31,7 +31,7 @@ function App() {
           {/* REDIRECCION */}
           <Route
             path="/"
-            element={<Navigate to="/login" replace />}
+            element={<Navigate to="/home" replace />}
           />
 
           {/* PUBLICAS */}
@@ -113,7 +113,7 @@ function App() {
           {/* 404 */}
           <Route
             path="*"
-            element={<Navigate to="/login" replace />}
+            element={<Navigate to="/home" replace />}
           />
 
         </Routes>
