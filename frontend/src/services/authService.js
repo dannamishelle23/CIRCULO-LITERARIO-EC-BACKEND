@@ -1,18 +1,24 @@
 import api from "./api";
 
-/*LOGIN*/
+//Maneja login y localstorage
 export const login = async (data) => {
 
   const response = await api.post("/auth/login", data);
 
   // GUARDAR TOKEN
-  if (response.data.token) {
-    localStorage.setItem("token", response.data.token);
+  if (response.data.usuario?.token) {
+    localStorage.setItem(
+      "token",
+      response.data.usuario.token
+    );
   }
 
-  // GUARDAR ROL
-  if (response.data.user?.role) {
-    localStorage.setItem("role", response.data.user.role);
+  // GUARDAR USUARIO COMPLETO
+  if (response.data.usuario) {
+    localStorage.setItem(
+      "usuario",
+      JSON.stringify(response.data.usuario)
+    );
   }
 
   return response.data;
@@ -29,37 +35,46 @@ export const register = async (data) => {
 /*VALIDAR SI ES ADMIN*/
 export const isAdmin = () => {
 
-  const role = localStorage.getItem("role");
+  const usuario = JSON.parse(
+    localStorage.getItem("usuario")
+  );
 
-  return role === "admin";
+  return usuario?.rol?.toLowerCase() === "administrador";
 };
 
-/*VALIDAR SI ES USUARIO*/
 /*VALIDAR SI ES LECTOR*/
 export const isLector = () => {
 
-  const role = localStorage.getItem("role");
+  const usuario = JSON.parse(
+    localStorage.getItem("usuario")
+  );
 
-  return role === "lector";
+  return usuario?.rol?.toLowerCase() === "lector";
 };
 
 /*VALIDAR SI ES AUTOR*/
 export const isAutor = () => {
 
-  const role = localStorage.getItem("role");
+  const usuario = JSON.parse(
+    localStorage.getItem("usuario")
+  );
 
-  return role === "autor";
+  return usuario?.rol?.toLowerCase() === "autor";
 };
 
 /*OBTENER ROL*/
 export const getRole = () => {
 
-  return localStorage.getItem("role");
+  const usuario = JSON.parse(
+    localStorage.getItem("usuario")
+  );
+
+  return usuario?.rol;
 };
 
 /*LOGOUT*/
 export const logout = () => {
 
   localStorage.removeItem("token");
-  localStorage.removeItem("role");
+  localStorage.removeItem("usuario");
 };
