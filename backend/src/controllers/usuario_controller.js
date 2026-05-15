@@ -126,11 +126,11 @@ const registrarModerador = async(req,res) => {
       email,
       password: await Usuarios.prototype.encryptPassword("MOD-" + passwordTemporal),
       rol: "Moderador",
-      creadoPor: req.usuarioHeader._id
+      creadoPor: req.usuarioHeader._id,
+      confirmEmail: true
     })
      // Subir imagen si existe
     if (req.files?.avatar) {
-
       const { secure_url, public_id } =
         await subirImagenCloudinary(
           req.files.avatar.tempFilePath
@@ -152,25 +152,347 @@ const registrarModerador = async(req,res) => {
   }
 }
 
+//Listar moderadores (solamente los que estén activos)
 const listarModeradores = async (req, res) => {
     try {
-        const moderadores = await Usuarios.find({ rol: "Moderador" })
-            // 1. Excluir campos sensibles y no necesarios para la respuesta
-            .select("-password -createdAt -updatedAt -__v -confirmEmail")
-            // 2. Obtener el nombre de quien creó el moderador (administrador) y mostrar solo su nombre
-            .populate("creadoPor", "nombres") 
 
-        res.status(200).json({ "Moderadores registrados": moderadores });
+        const moderadores = await Usuarios.find({
+            rol: "Moderador",
+            estadoUsuario: "Activo"
+        })
+        .select("-password -createdAt -updatedAt -__v -confirmEmail")
+        .populate("creadoPor", "nombres")
+
+        res.status(200).json({
+            "Moderadores registrados": moderadores
+        })
+
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ msg: `Error en el servidor - ${error}` });
+
+        console.error(error)
+
+        res.status(500).json({
+            msg: `Error en el servidor - ${error}`
+        })
     }
-};
+}
+
+// Visualizar un moderador específico
+const detalleModerador = async(req,res) => {
+
+  try {
+    const { id } = req.params
+
+    // Validar ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        msg: "ID inválido."
+      })
+    }
+
+    // Buscar moderador
+    const moderador = await Usuarios.findOne({
+      _id: id,
+      rol: "Moderador"
+    })
+    .select("-password -createdAt -updatedAt -__v -confirmEmail")
+    .populate("creadoPor", "nombres apellidos email")
+
+    // Validar existencia
+    if (!moderador) {
+      return res.status(404).json({
+        msg: "Moderador no encontrado."
+      })
+    }
+
+    // Validar estado
+    if (moderador.estadoUsuario === "Suspendido") {
+      return res.status(403).json({
+        msg: "El moderador se encuentra suspendido."
+      })
+    }
+
+    if (moderador.estadoUsuario === "Eliminado") {
+      return res.status(403).json({
+        msg: "El moderador fue eliminado del sistema."
+      })
+    }
+
+    res.status(200).json({
+      moderador
+    })
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      msg: `Error en el servidor - ${error}`
+    })
+  }
+}
+
+//4. Deshabilitar moderador
+const deshabilitarModerador = async(req,res) => {
+
+  try {
+
+    const { id } = req.params
+
+    // Validar ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        msg: "ID inválido."
+      })
+    }
+
+    // Buscar moderador
+    const moderadorBDD = await Usuarios.findOne({
+      _id: id,
+      rol: "Moderador"
+    })
+
+    // Validar existencia
+    if (!moderadorBDD) {
+      return res.status(404).json({
+        msg: "Moderador no encontrado."
+      })
+    }
+
+    // Verificar si ya está suspendido
+    if (moderadorBDD.estadoUsuario === "Suspendido") {
+      return res.status(400).json({
+        msg: "El moderador ya se encuentra suspendido."
+      })
+    }
+
+    // Soft delete
+    moderadorBDD.estadoUsuario = "Suspendido"
+
+    await moderadorBDD.save()
+
+    res.status(200).json({
+      msg: "Moderador suspendido correctamente."
+    })
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      msg: `Error en el servidor - ${error}`
+    })
+  }
+}
+
+//Suspender usuario lector/autor
+const suspenderUsuario = async(req,res) => {
+
+  try {
+
+    const { id } = req.params
+
+    // Validar ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        msg: "ID inválido."
+      })
+    }
+
+    // Evitar auto suspensión
+    if (req.usuarioHeader._id.toString() === id) {
+      return res.status(400).json({
+        msg: "No puedes suspender tu propia cuenta."
+      })
+    }
+
+    // Buscar usuario
+    const usuarioBDD = await Usuarios.findById(id)
+
+    // Validar existencia
+    if (!usuarioBDD) {
+      return res.status(404).json({
+        msg: "Usuario no encontrado."
+      })
+    }
+
+    // Solo lectores/autores
+    if (
+      usuarioBDD.rol !== "Lector" &&
+      usuarioBDD.rol !== "Autor"
+    ) {
+      return res.status(403).json({
+        msg: "Solo puedes suspender usuarios lectores/autores."
+      })
+    }
+
+    // Validar estado
+    if (usuarioBDD.estadoUsuario === "Suspendido") {
+      return res.status(400).json({
+        msg: "El usuario ya se encuentra suspendido."
+      })
+    }
+
+    if (usuarioBDD.estadoUsuario === "Eliminado") {
+      return res.status(400).json({
+        msg: "No puedes suspender un usuario eliminado."
+      })
+    }
+
+    // Suspender usuario
+    usuarioBDD.estadoUsuario = "Suspendido"
+
+    await usuarioBDD.save()
+
+    res.status(200).json({
+      msg: "Usuario suspendido correctamente."
+    })
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      msg: `Error en el servidor - ${error}`
+    })
+  }
+}
+
+// Reactivar usuario lector/autor
+const reactivarUsuario = async(req,res) => {
+
+  try {
+
+    const { id } = req.params
+
+    // Validar ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        msg: "ID inválido."
+      })
+    }
+
+    // Buscar usuario
+    const usuarioBDD = await Usuarios.findById(id)
+
+    // Validar existencia
+    if (!usuarioBDD) {
+      return res.status(404).json({
+        msg: "Usuario no encontrado."
+      })
+    }
+
+    // Solo lectores/autores
+    if (
+      usuarioBDD.rol !== "Lector" &&
+      usuarioBDD.rol !== "Autor"
+    ) {
+      return res.status(403).json({
+        msg: "Solo puedes reactivar usuarios lectores/autores."
+      })
+    }
+
+    // Validar estado
+    if (usuarioBDD.estadoUsuario === "Activo") {
+      return res.status(400).json({
+        msg: "El usuario ya se encuentra activo."
+      })
+    }
+
+    if (usuarioBDD.estadoUsuario === "Eliminado") {
+      return res.status(400).json({
+        msg: "No puedes reactivar un usuario eliminado."
+      })
+    }
+
+    // Reactivar usuario
+    usuarioBDD.estadoUsuario = "Activo"
+
+    await usuarioBDD.save()
+
+    res.status(200).json({
+      msg: "Usuario reactivado correctamente."
+    })
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      msg: `Error en el servidor - ${error}`
+    })
+  }
+}
+
+//Eliminar definitivamente un lector/autor
+const eliminarUsuario = async(req,res) => {
+
+  try {
+
+    const { id } = req.params
+
+    // Validar ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        msg: "ID inválido."
+      })
+    }
+
+    // Evitar auto eliminación
+    if (req.usuarioHeader._id.toString() === id) {
+      return res.status(400).json({
+        msg: "No puedes eliminar tu propia cuenta."
+      })
+    }
+
+    // Buscar usuario
+    const usuarioBDD = await Usuarios.findById(id)
+
+    // Validar existencia
+    if (!usuarioBDD) {
+      return res.status(404).json({
+        msg: "Usuario no encontrado."
+      })
+    }
+
+    // Solo lectores/autores
+    if (
+      usuarioBDD.rol !== "Lector" &&
+      usuarioBDD.rol !== "Autor"
+    ) {
+      return res.status(403).json({
+        msg: "Solo puedes eliminar usuarios lectores/autores."
+      })
+    }
+
+    // Eliminación lógica
+    usuarioBDD.estadoUsuario = "Eliminado"
+
+    await usuarioBDD.save()
+
+    res.status(200).json({
+      msg: "Usuario eliminado correctamente."
+    })
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      msg: `Error en el servidor - ${error}`
+    })
+  }
+}
 
 export {
     perfil,
     actualizarPerfil,
     actualizarPassword,
     registrarModerador,
-    listarModeradores
+    listarModeradores,
+    detalleModerador,
+    deshabilitarModerador,
+    suspenderUsuario,
+    reactivarUsuario,
+    eliminarUsuario
 }
