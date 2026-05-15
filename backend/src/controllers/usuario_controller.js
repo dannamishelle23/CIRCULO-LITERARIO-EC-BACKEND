@@ -318,8 +318,7 @@ const suspenderUsuario = async(req,res) => {
 
     // Solo lectores/autores
     if (
-      usuarioBDD.rol !== "Lector" &&
-      usuarioBDD.rol !== "Autor"
+      usuarioBDD.rol !== "Usuario"
     ) {
       return res.status(403).json({
         msg: "Solo puedes suspender usuarios lectores/autores."
@@ -384,8 +383,7 @@ const reactivarUsuario = async(req,res) => {
 
     // Solo lectores/autores
     if (
-      usuarioBDD.rol !== "Lector" &&
-      usuarioBDD.rol !== "Autor"
+      usuarioBDD.rol !== "Usuario"
     ) {
       return res.status(403).json({
         msg: "Solo puedes reactivar usuarios lectores/autores."
@@ -457,8 +455,7 @@ const eliminarUsuario = async(req,res) => {
 
     // Solo lectores/autores
     if (
-      usuarioBDD.rol !== "Lector" &&
-      usuarioBDD.rol !== "Autor"
+      usuarioBDD.rol !== "Usuario"
     ) {
       return res.status(403).json({
         msg: "Solo puedes eliminar usuarios lectores/autores."
