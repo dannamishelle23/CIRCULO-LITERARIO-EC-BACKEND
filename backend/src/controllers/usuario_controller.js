@@ -152,13 +152,13 @@ const registrarModerador = async(req,res) => {
   }
 }
 
-//Listar moderadores (solamente los que estén activos)
+//Listar moderadores (activos y suspendidos)
 const listarModeradores = async (req, res) => {
     try {
 
         const moderadores = await Usuarios.find({
             rol: "Moderador",
-            estadoUsuario: "Activo"
+            estadoUsuario: { $ne: "Eliminado" }      //Excluir moderadores eliminados
         })
         .select("-password -createdAt -updatedAt -__v -confirmEmail")
         .populate("creadoPor", "nombres")
@@ -206,12 +206,6 @@ const detalleModerador = async(req,res) => {
     }
 
     // Validar estado
-    if (moderador.estadoUsuario === "Suspendido") {
-      return res.status(403).json({
-        msg: "El moderador se encuentra suspendido."
-      })
-    }
-
     if (moderador.estadoUsuario === "Eliminado") {
       return res.status(403).json({
         msg: "El moderador fue eliminado del sistema."
@@ -273,6 +267,80 @@ const deshabilitarModerador = async(req,res) => {
 
     res.status(200).json({
       msg: "Moderador suspendido correctamente."
+    })
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      msg: `Error en el servidor - ${error}`
+    })
+  }
+}
+
+//Listar usuarios (solamente activos y suspendidos)
+const listarUsuarios = async (req, res) => {
+    try {
+
+        const usuarios = await Usuarios.find({
+            rol: "Usuario",
+            estadoUsuario: { $ne: "Eliminado" }      //Excluir de la lista los usuarios eliminados
+        })
+        .select("-password -createdAt -updatedAt -__v -confirmEmail")
+        .populate("creadoPor", "nombres")
+
+        res.status(200).json({
+            "Usuarios registrados": usuarios
+        })
+
+    } catch (error) {
+
+        console.error(error)
+
+        res.status(500).json({
+            msg: `Error en el servidor - ${error}`
+        })
+    }
+}
+
+// Visualizar un usuario específico
+const detalleUsuario = async(req,res) => {
+
+  try {
+    const { id } = req.params
+
+    // Validar ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        msg: "ID inválido."
+      })
+    }
+
+    // Buscar usuario
+    const usuario = await Usuarios.findOne({
+      _id: id,
+      rol: "Usuario"
+    })
+    .select("-password -createdAt -updatedAt -__v -confirmEmail")
+    .populate("creadoPor", "nombres apellidos email")
+
+    // Validar existencia
+    if (!usuario) {
+      return res.status(404).json({
+        msg: "Usuario no encontrado."
+      })
+    }
+
+    // Validar estado
+    if (usuario.estadoUsuario === "Eliminado") {
+      return res.status(403).json({
+        msg: "El usuario fue eliminado del sistema."
+      })
+    }
+
+    res.status(200).json({
+      usuario
     })
 
   } catch (error) {
@@ -489,6 +557,8 @@ export {
     listarModeradores,
     detalleModerador,
     deshabilitarModerador,
+    listarUsuarios,
+    detalleUsuario,
     suspenderUsuario,
     reactivarUsuario,
     eliminarUsuario
