@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Register from "./pages/Register";
+import Confirm from "./pages/Confirm";
 import Comunidad from "./pages/Comunidad";
 import Beneficios from "./pages/Beneficios";
 import Contacto from "./pages/Contacto";
@@ -16,12 +17,14 @@ import Logs from "./pages/Logs";
 import Navbar from "./components/Navbar";
 
 import { isAdmin } from "./services/authService";
+import { ToastContainer } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 
 function App() {
 
   return (
     <BrowserRouter>
-
+      <ToastContainer />
       <div className="min-h-screen bg-[#FEF2E1]">
 
         <Navbar />
@@ -43,6 +46,11 @@ function App() {
           <Route
             path="/register"
             element={<Register />}
+          />
+
+          <Route
+            path="/auth/confirmar/:token"
+            element={<Confirm />}
           />
 
           {/* PRIVADAS */}

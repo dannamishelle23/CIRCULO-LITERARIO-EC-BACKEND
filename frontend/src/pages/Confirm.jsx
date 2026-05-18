@@ -13,7 +13,7 @@ export const Confirm = () => {
 
     useEffect(() => {
         const confirmAccount = async () => {
-            const url = `${API_BASE_URL}/usuarios/confirmar/${token}`
+            const url = `${API_BASE_URL}/auth/confirmar/${token}`
             const response = await fetchDataBackend(url, null, "GET")
             setIsConfirmed(Boolean(response))
             setIsLoading(false)
@@ -41,3 +41,5 @@ export const Confirm = () => {
         </div>
     )
 }
+
+export default Confirm
