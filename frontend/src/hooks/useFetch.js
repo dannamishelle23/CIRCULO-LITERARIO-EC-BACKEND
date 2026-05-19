@@ -4,7 +4,14 @@ import { toast } from "react-toastify"
 
 export function useFetch() {
 
-    const fetchDataBackend = useCallback(async (url, data = null, method = "GET", headers = {}) => {
+    const fetchDataBackend = useCallback(async (
+        url,
+        data = null,
+        method = "GET",
+        headers = {}
+    ) => {
+
+        const toastId = toast.loading("Procesando solicitud...")
 
         try {
 
@@ -23,7 +30,13 @@ export function useFetch() {
 
             const response = await axios(options)
 
-            toast.success(response?.data?.msg)
+            toast.update(toastId, {
+                render: response?.data?.msg,
+                type: "success",
+                isLoading: false,
+                autoClose: 3000,
+                closeOnClick: true
+            })
 
             return response?.data
 
@@ -31,7 +44,13 @@ export function useFetch() {
 
             console.error(error)
 
-            toast.error(error.response?.data?.msg)
+            toast.update(toastId, {
+                render: error.response?.data?.msg || "Ocurrió un error",
+                type: "error",
+                isLoading: false,
+                autoClose: 3000,
+                closeOnClick: true
+            })
         }
 
     }, [])

@@ -1,6 +1,6 @@
 export const API_BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/api`
 
-const STORAGE_KEY = "circuloLiterarioAuth"
+const STORAGE_KEY = "usuario"
 
 export const getStoredSession = () => {
   try {
@@ -21,10 +21,10 @@ export const clearSession = () => {
 }
 
 export const getAuthHeaders = () => {
-  const session = getStoredSession()
-  if (!session?.token) return {}
+  const token = localStorage.getItem("token")
+  if (!token) return {}
 
   return {
-    Authorization: `Bearer ${session.token}`
+    Authorization: `Bearer ${token}`
   }
 }

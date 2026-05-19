@@ -1,164 +1,73 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
+import PublicLayout from "./layout/PublicLayout";
+import PrivateLayout from "./layout/PrivateLayout";
+
 import Login from "./pages/Login";
-import Home from "./pages/Home";
 import Register from "./pages/Register";
-import Confirm from "./pages/Confirm";
 import Forgot from "./pages/Forgot";
 import Reset from "./pages/Reset";
+import Confirm from "./pages/Confirm";
+
+import Home from "./pages/Home";
 import Comunidad from "./pages/Comunidad";
 import Beneficios from "./pages/Beneficios";
 import Contacto from "./pages/Contacto";
-import AdminUsers from "./pages/AdminUsers";
-import CreateModerator from "./pages/CreateModerator";
-import UserDetail from "./pages/UserDetail";
-import Forbidden from "./pages/Forbidden";
 import Details from "./pages/Details";
+import AdminUsers from "./pages/AdminUsers";
+import ModeratorUsers from "./pages/ModeratorUsers";
+import Profile from "./pages/Profile";
+import Update from "./pages/Update";
+import UserDetail from "./pages/UserDetail";
+import UserPanel from "./pages/userPanel";
+import Menu from "./pages/Menu";
+import ObrasMenu from "./pages/ObrasMenu";
+import CrearObra from "./pages/CrearObra";
+import MisObras from "./pages/MisObras";
+
 import PrivateRoute from "./components/PrivateRoute";
-import AdminRoute from "./components/AdminRoute";
-import Logs from "./pages/Logs";
-
-import Navbar from "./components/Navbar";
-
-import { isAdmin } from "./services/authService";
-import { ToastContainer } from "react-toastify"
-import "react-toastify/dist/ReactToastify.css"
 
 function App() {
-
   return (
     <BrowserRouter>
-      <ToastContainer />
-      <div className="min-h-screen bg-[#FEF2E1]">
 
-        <Navbar />
+      <Routes>
 
-        <Routes>
+        {/* REDIRECCIÓN */}
+        <Route path="/" element={<Navigate to="/home" replace />} />
 
-          {/* REDIRECCION */}
-          <Route
-            path="/"
-            element={<Navigate to="/home" replace />}
-          />
+        {/* RUTAS PUBLICAS (con Navbar) */}
+        <Route element={<PublicLayout />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/auth/confirmar/:token" element={<Confirm />} />
+          <Route path="/forgot" element={<Forgot />} />
+          <Route path="/reset/password/:token" element={<Reset />} />
+        </Route>
 
-          {/* PUBLICAS */}
-          <Route
-            path="/login"
-            element={<Login />}
-          />
+        {/* RUTAS PRIVADAS */}
+        <Route element={<PrivateRoute><PrivateLayout /></PrivateRoute>}>
 
-          <Route
-            path="/register"
-            element={<Register />}
-          />
+          <Route path="/home" element={<Home />} />
+          <Route path="/comunidad" element={<Comunidad />} />
+          <Route path="/beneficios" element={<Beneficios />} />
+          <Route path="/contacto" element={<Contacto />} />
+          <Route path="/details" element={<Details />} />
+          <Route path="/admin" element={<AdminUsers />} />
+          <Route path="/moderator" element={<ModeratorUsers />} />
+          <Route path="/user-dashboard" element={<UserPanel />} />
+          <Route path="/menu" element={<Menu />} />
+          <Route path="/obras" element={<ObrasMenu />} />
+          <Route path="/crear-obra" element={<CrearObra />} />
+          <Route path="/mis-obras" element={<MisObras />} />
+          <Route path="/dashboard" element={<Navigate to="/user-dashboard" replace />} />
+          <Route path="/perfil" element={<Profile />} />
+          <Route path="/configuracion" element={<Update />} />
+          <Route path="/detalle/:tipo/:id" element={<UserDetail />} />
 
-          <Route
-            path="/auth/confirmar/:token"
-            element={<Confirm />}
-          />
+        </Route>
 
-          <Route 
-            path="/forgot"
-            element={<Forgot />} 
-          />
-
-          <Route 
-            path="/reset/password/:token"
-            element={<Reset />} 
-          />
-
-          {/* PRIVADAS */}
-          <Route
-            path="/home"
-            element={
-              <PrivateRoute>
-              <Home />
-          </PrivateRoute>}
-          />
-
-          <Route
-            path="/comunidad"
-            element={
-              <PrivateRoute>
-                <Comunidad />
-              </PrivateRoute>}
-          />
-
-          <Route
-            path="/beneficios"
-            element={
-              <PrivateRoute>
-                <Beneficios />
-              </PrivateRoute>}
-          />
-
-          <Route
-            path="/contacto"
-            element={
-              <PrivateRoute>
-                <Contacto />
-              </PrivateRoute>}
-          />
-
-          {/* DETAILS */}
-          <Route
-            path="/details"
-            element={
-              <PrivateRoute>
-                <Details />
-              </PrivateRoute>}
-          />
-
-          {/* ADMIN */}
-          <Route
-            path="/admin"
-            element={
-              <AdminRoute>
-                <AdminUsers />
-              </AdminRoute>}
-          />
-
-          <Route
-            path="/crear-moderador"
-            element={
-              <AdminRoute>
-                <CreateModerator />
-              </AdminRoute>
-            }
-          />
-
-          <Route
-            path="/detalle/:tipo/:id"
-            element={
-              <AdminRoute>
-                <UserDetail />
-              </AdminRoute>
-            }
-          />
-
-          <Route
-            path="/logs"
-            element={
-              <AdminRoute>
-                <Logs />
-              </AdminRoute>}
-          />
-
-          {/* FORBIDDEN */}
-          <Route
-            path="/forbidden"
-            element={<Forbidden />}
-          />
-
-          {/* 404 */}
-          <Route
-            path="*"
-            element={<Navigate to="/home" replace />}
-          />
-
-        </Routes>
-
-      </div>
+      </Routes>
 
     </BrowserRouter>
   );

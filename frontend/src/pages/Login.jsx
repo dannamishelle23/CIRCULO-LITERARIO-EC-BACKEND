@@ -30,8 +30,10 @@ export default function Login() {
       // Redirección inmediata según el rol devuelto por el Backend
       if (rol === "administrador") {
         navigate("/admin")
+      } else if (rol === "moderador") {
+        navigate("/moderator")
       } else {
-        navigate("/home")
+        navigate("/user-dashboard")
       }
 
     } catch (error) {

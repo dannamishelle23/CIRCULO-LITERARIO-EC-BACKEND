@@ -1,10 +1,18 @@
 import { Navigate } from "react-router-dom";
 
-import { isAdmin } from "../services/authService";
-
+// eslint-disable-next-line react/prop-types
 const AdminRoute = ({ children }) => {
 
-  return isAdmin()
+  const usuario = JSON.parse(
+    localStorage.getItem("usuario")
+  );
+
+  const rol = usuario?.rol;
+
+  return (
+    rol === "Administrador" ||
+    rol === "Moderador"
+  )
     ? children
     : <Navigate to="/forbidden" replace />;
 };

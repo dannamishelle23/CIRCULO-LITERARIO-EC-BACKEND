@@ -5,92 +5,113 @@ import { API_BASE_URL, getAuthHeaders, getStoredSession, saveSession } from "../
 import { buildProfileFormValues } from "../../utils/profile"
 
 const FormularioPerfil = ({ profile, onProfileUpdated }) => {
-    const session = getStoredSession()
-    const fetchDataBackend = useFetch()
-    const { register, handleSubmit, reset, formState: { errors } } = useForm({
-        defaultValues: buildProfileFormValues(profile)
-    })
+  const session = getStoredSession()
+  const fetchDataBackend = useFetch()
+  
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+    defaultValues: buildProfileFormValues(profile)
+  })
 
-    useEffect(() => {
-        reset(buildProfileFormValues(profile))
-    }, [profile, reset])
+  useEffect(() => {
+    reset(buildProfileFormValues(profile))
+  }, [profile, reset])
 
-    const updateProfile = async (dataForm) => {
-        if (!session?._id) return
+  const updateProfile = async (dataForm) => {
+    if (!session?._id) return
 
-        const url = `${API_BASE_URL}/auth/actualizar-perfil/${session._id}`
-        const response = await fetchDataBackend(url, dataForm, "PUT", getAuthHeaders())
+    const url = `${API_BASE_URL}/usuarios/actualizar-perfil/${session._id}`
+    const response = await fetchDataBackend(url, dataForm, "PUT", getAuthHeaders())
 
-        if (response) {
-            const updatedSession = {
-                ...session,
-                ...dataForm
-            }
-            saveSession(updatedSession)
-            onProfileUpdated?.(updatedSession)
-        }
+    if (response) {
+      const updatedSession = {
+        ...session,
+        ...dataForm
+      }
+      saveSession(updatedSession)
+      onProfileUpdated?.(updatedSession)
     }
+  }
 
-    return (
-        <form onSubmit={handleSubmit(updateProfile)}>
-            <div>
-                <label className="mb-2 block text-sm font-semibold">Nombre</label>
-                <input
-                    type="text"
-                    placeholder="Ingresa tu nombre"
-                    className="block w-full rounded-md border border-gray-300 py-2 px-3 text-gray-600 mb-2"
-                    {...register("nombres", { required: "El nombre es obligatorio." })}
-                />
-                {errors.nombres && <p className="text-sm text-red-600 mb-3">{errors.nombres.message}</p>}
-            </div>
-            <div>
-                <label className="mb-2 block text-sm font-semibold">Apellido</label>
-                <input
-                    type="text"
-                    placeholder="Ingresa tu apellido"
-                    className="block w-full rounded-md border border-gray-300 py-2 px-3 text-gray-600 mb-2"
-                    {...register("apellidos", { required: "El apellido es obligatorio." })}
-                />
-                {errors.apellidos && <p className="text-sm text-red-600 mb-3">{errors.apellidos.message}</p>}
-            </div>
-            <div>
-                <label className="mb-2 block text-sm font-semibold">Provincia</label>
-                <input
-                    type="text"
-                    placeholder="Ingresa tu provincia"
-                    className="block w-full rounded-md border border-gray-300 py-2 px-3 text-gray-600 mb-2"
-                    {...register("provincia", { required: "La provincia es obligatoria." })}
-                />
-                {errors.provincia && <p className="text-sm text-red-600 mb-3">{errors.provincia.message}</p>}
-            </div>
-            <div>
-                <label className="mb-2 block text-sm font-semibold">Nombre de usuario</label>
-                <input
-                    type="text"
-                    placeholder="Ingresa tu nombre de usuario"
-                    className="block w-full rounded-md border border-gray-300 py-2 px-3 text-gray-600 mb-2"
-                    {...register("username", { required: "El nombre de usuario es obligatorio." })}
-                />
-                {errors.username && <p className="text-sm text-red-600 mb-3">{errors.username.message}</p>}
-            </div>
-            <div>
-                <label className="mb-2 block text-sm font-semibold">Correo electronico</label>
-                <input
-                    type="email"
-                    placeholder="Ingresa tu correo"
-                    className="block w-full rounded-md border border-gray-300 py-2 px-3 text-gray-600 mb-2"
-                    {...register("email", { required: "El correo electronico es obligatorio." })}
-                />
-                {errors.email && <p className="text-sm text-red-600 mb-3">{errors.email.message}</p>}
-            </div>
+  // Estilos visuales comunes
+  const labelStyle = "mb-1.5 block text-xs font-bold uppercase text-[#2c3e50] tracking-widest"
+  const inputStyle = "block w-full rounded-lg border border-gray-200 bg-white py-2.5 px-3 text-sm text-gray-700 focus:border-[#e67e22] focus:ring-1 focus:ring-[#e67e22] focus:outline-none transition-all duration-200 shadow-sm"
+  const errorStyle = "text-xs text-red-500 mt-1 font-semibold italic"
 
-            <input
-                type="submit"
-                className='bg-[#2c3e50] w-full p-2 mt-5 text-slate-100 uppercase font-bold rounded-lg hover:bg-[#1b2836] cursor-pointer transition-all'
-                value='Actualizar'
-            />
-        </form>
-    )
+  return (
+    <form onSubmit={handleSubmit(updateProfile)} className="space-y-4">
+      
+      <div>
+        <h2 className="text-xl font-black text-[#2c3e50] uppercase tracking-tight mb-1">
+          Datos Personales
+        </h2>
+        <p className="text-xs text-gray-400 font-medium mb-4">Modifica la información visible de tu cuenta.</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className={labelStyle}>Nombre</label>
+          <input
+            type="text"
+            placeholder="Tu nombre"
+            className={inputStyle}
+            {...register("nombres", { required: "El nombre es obligatorio." })}
+          />
+          {errors.nombres && <p className={errorStyle}>{errors.nombres.message}</p>}
+        </div>
+
+        <div>
+          <label className={labelStyle}>Apellido</label>
+          <input
+            type="text"
+            placeholder="Tu apellido"
+            className={inputStyle}
+            {...register("apellidos", { required: "El apellido es obligatorio." })}
+          />
+          {errors.apellidos && <p className={errorStyle}>{errors.apellidos.message}</p>}
+        </div>
+      </div>
+
+      <div>
+        <label className={labelStyle}>Provincia</label>
+        <input
+          type="text"
+          placeholder="Tu provincia"
+          className={inputStyle}
+          {...register("provincia", { required: "La provincia es obligatoria." })}
+        />
+        {errors.provincia && <p className={errorStyle}>{errors.provincia.message}</p>}
+      </div>
+
+      <div>
+        <label className={labelStyle}>Nombre de usuario</label>
+        <input
+          type="text"
+          placeholder="lector_efimero"
+          className={inputStyle}
+          {...register("username", { required: "El nombre de usuario es obligatorio." })}
+        />
+        {errors.username && <p className={errorStyle}>{errors.username.message}</p>}
+      </div>
+
+      <div>
+        <label className={labelStyle}>Correo electrónico</label>
+        <input
+          type="email"
+          placeholder="correo@ejemplo.com"
+          className={inputStyle}
+          {...register("email", { required: "El correo electrónico es obligatorio." })}
+        />
+        {errors.email && <p className={errorStyle}>{errors.email.message}</p>}
+      </div>
+
+      <button
+        type="submit"
+        className="w-full bg-[#2c3e50] text-white font-bold py-3 rounded-xl hover:bg-[#1b2836] transition shadow-sm mt-2 uppercase tracking-wider text-sm cursor-pointer"
+      >
+        Guardar Cambios
+      </button>
+    </form>
+  )
 }
 
 export default FormularioPerfil

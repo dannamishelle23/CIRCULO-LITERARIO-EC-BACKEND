@@ -9,11 +9,13 @@ import {
   deleteUser,
   reactivateUser
 } from "../services/userService";
+import { logout } from "../services/authService";
 
 import {
   FaUsersCog,
   FaEye,
 } from "react-icons/fa";
+import PanelMenu from "../components/PanelMenu";
 
 export default function AdminUsers() {
 
@@ -335,44 +337,41 @@ export default function AdminUsers() {
 
       <div className="max-w-7xl mx-auto">
 
+        <PanelMenu />
+
         {/* HEADER */}
         <div className="bg-white rounded-3xl shadow-xl p-8 mb-8">
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
 
-            <div className="flex items-center gap-4">
+            <div className="bg-amber-100 p-5 rounded-2xl">
+              <FaUsersCog className="text-5xl text-amber-700" />
+            </div>
 
-              <div className="bg-amber-100 p-5 rounded-2xl">
-                <FaUsersCog className="text-5xl text-amber-700" />
-              </div>
+            <div>
 
-              <div>
+              <h1 className="text-4xl font-black text-[#2c3e50]">
+                Panel Administrativo
+              </h1>
 
-                <h1 className="text-4xl font-black text-[#2c3e50]">
-                  Panel Administrativo
-                </h1>
-
-                <p className="text-slate-500 mt-2">
-                  Gestiona moderadores y usuarios
-                </p>
-
-              </div>
+              <p className="text-slate-500 mt-2">
+                Gestiona moderadores y usuarios
+              </p>
 
             </div>
 
-            {/* BOTON CREAR MODERADOR */}
-            {esAdministrador && (
+          </div>
 
+          {esAdministrador && (
+            <div className="mt-6 flex justify-end">
               <button
                 onClick={() => navigate("/crear-moderador")}
-                className="mt-4 bg-amber-700 hover:bg-amber-600 text-white px-5 py-3 rounded-xl"
+                className="bg-amber-700 hover:bg-amber-600 text-white px-5 py-3 rounded-xl"
               >
                 Añadir Moderador
               </button>
-
-            )}
-
-          </div>
+            </div>
+          )}
 
         </div>
 
