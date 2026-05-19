@@ -2,7 +2,7 @@ import sendMail from "../config/nodemailer.js"
 
 //Correo enviado a los usuarios (lectores) para confirmar su cuenta en el registro
 const sendMailToRegister = (userMail, token) => {
-    const urlConfirmacion = `${process.env.URL_BACKEND}confirmar/${token}`;
+    const urlConfirmacion = `${process.env.URL_FRONTEND}/auth/confirmar/${token}`;
 
     return sendMail(
         userMail,
@@ -40,7 +40,7 @@ const sendMailToRegister = (userMail, token) => {
 
 //Correo enviado a todos los usuarios en caso de olvido de contraseña
 const sendMailToRecoveryPassword = (userMail, token) => {
-    const urlRecuperacion = `${process.env.URL_BACKEND}recuperar-password/${token}`;
+    const urlRecuperacion = `${process.env.URL_FRONTEND}/reset/password/${token}`;
 
     return sendMail(
         userMail,
@@ -83,7 +83,7 @@ const sendMailToRecoveryPassword = (userMail, token) => {
 
 //Correo enviado a los moderadores para proporcionarles sus credenciales de acceso
 const sendMailToCreateModerator = (userMail, userName, password) => {
-    const urlLogin = `${process.env.URL_BACKEND}login`;
+    const urlLogin = `${process.env.URL_FRONTEND}/login`;
 
     return sendMail(
         userMail,

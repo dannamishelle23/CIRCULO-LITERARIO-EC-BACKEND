@@ -425,7 +425,7 @@ const suspenderUsuario = async(req,res) => {
   }
 }
 
-// Reactivar usuario lector/autor
+// Reactivar cuentas de usuario (moderadores o lectores/autores suspendidos)
 const reactivarUsuario = async(req,res) => {
 
   try {
@@ -451,7 +451,8 @@ const reactivarUsuario = async(req,res) => {
 
     // Solo lectores/autores
     if (
-      usuarioBDD.rol !== "Usuario"
+      usuarioBDD.rol !== "Usuario" &&
+      usuarioBDD.rol !== "Moderador"
     ) {
       return res.status(403).json({
         msg: "Solo puedes reactivar usuarios lectores/autores."
@@ -477,7 +478,7 @@ const reactivarUsuario = async(req,res) => {
     await usuarioBDD.save()
 
     res.status(200).json({
-      msg: "Usuario reactivado correctamente."
+      msg: `${usuarioBDD.rol} reactivado correctamente.`
     })
 
   } catch (error) {
