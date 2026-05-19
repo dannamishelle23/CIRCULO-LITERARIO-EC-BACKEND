@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import {
   getModerators,
+  getUsers,
   suspendModerator,
   blockUser,
   deleteUser,
@@ -8,12 +11,14 @@ import {
 } from "../services/userService";
 
 import {
-  FaUsersCog
+  FaUsersCog,
+  FaEye,
 } from "react-icons/fa";
 
 export default function AdminUsers() {
 
   const [users, setUsers] = useState([]);
+  const navigate = useNavigate();
 
   const usuarioLogueado = JSON.parse(
     localStorage.getItem("usuario")
@@ -22,14 +27,19 @@ export default function AdminUsers() {
   const esAdministrador =
     usuarioLogueado?.rol === "Administrador";
 
-  /* OBTENER USUARIOS */
+  /* OBTENER MODERADORES Y USUARIOS */
   const fetchUsers = async () => {
+
     try {
 
-      // POR AHORA SOLO LISTAR MODERADORES
-      const data = await getModerators();
+      const moderadores = await getModerators();
 
-      setUsers(data);
+      const usuarios = await getUsers();
+
+      setUsers([
+        ...moderadores,
+        ...usuarios
+      ]);
 
     } catch (error) {
       console.error(error);
@@ -80,7 +90,7 @@ export default function AdminUsers() {
     }
   };
 
-  /* ELIMINAR */
+  /* ELIMINAR USUARIO */
   const handleDelete = async (id) => {
 
     const confirmDelete = window.confirm(
@@ -104,7 +114,7 @@ export default function AdminUsers() {
   const handleReactivate = async (id) => {
 
     const confirmReactivate = window.confirm(
-      "¿Deseas reactivar este usuario?"
+      "¿Deseas reactivar esta cuenta?"
     );
 
     if (!confirmReactivate) return;
@@ -120,7 +130,7 @@ export default function AdminUsers() {
     }
   };
 
-  /* FILTRAR USUARIOS */
+  /* FILTRAR */
   const moderadores = users.filter(
     (user) => user.rol === "Moderador"
   );
@@ -129,7 +139,7 @@ export default function AdminUsers() {
     (user) => user.rol === "Usuario"
   );
 
-  /* TABLA REUTILIZABLE */
+  /* TABLA */
   const renderTable = (title, data) => (
 
     <div className="bg-white rounded-3xl shadow-xl overflow-hidden mb-10">
@@ -177,12 +187,14 @@ export default function AdminUsers() {
             {data.length === 0 ? (
 
               <tr>
+
                 <td
                   colSpan="5"
                   className="text-center py-8 text-slate-500"
                 >
-                  No hay usuarios en esta sección
+                  No hay usuarios
                 </td>
+
               </tr>
 
             ) : (
@@ -196,9 +208,11 @@ export default function AdminUsers() {
 
                   {/* NOMBRE */}
                   <td className="px-6 py-5">
+
                     <p className="font-bold text-[#2c3e50]">
                       {user.nombres} {user.apellidos}
                     </p>
+
                   </td>
 
                   {/* EMAIL */}
@@ -233,7 +247,7 @@ export default function AdminUsers() {
                   {/* ACCIONES */}
                   <td className="px-6 py-5">
 
-                    <div className="flex justify-center gap-3">
+                    <div className="flex justify-center gap-3 flex-wrap">
 
                       {/* SUSPENDER */}
                       {user.estadoUsuario === "Activo" &&
@@ -249,7 +263,8 @@ export default function AdminUsers() {
                           >
                             Suspender
                           </button>
-                        )}
+
+                      )}
 
                       {/* REACTIVAR */}
                       {user.estadoUsuario === "Suspendido" && (
@@ -265,7 +280,22 @@ export default function AdminUsers() {
 
                       )}
 
-                      {/* ELIMINAR SOLO USUARIOS LECTOR/AUTOR (LO HACE SOLO EL ADMINISTRADOR)*/}
+                      <button
+                        onClick={() =>
+                          navigate(
+                            `/detalle/${
+                              user.rol === "Moderador"
+                                ? "moderador"
+                                : "usuario"
+                            }/${user._id}`
+                          )
+                        }
+                        className="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-xl transition"
+                      >
+                        <FaEye />
+                      </button>
+
+                      {/* ELIMINAR SOLO USUARIOS */}
                       {esAdministrador &&
                         user.rol === "Usuario" &&
                         user._id !== usuarioLogueado._id && (
@@ -308,23 +338,39 @@ export default function AdminUsers() {
         {/* HEADER */}
         <div className="bg-white rounded-3xl shadow-xl p-8 mb-8">
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between">
 
-            <div className="bg-amber-100 p-5 rounded-2xl">
-              <FaUsersCog className="text-5xl text-amber-700" />
+            <div className="flex items-center gap-4">
+
+              <div className="bg-amber-100 p-5 rounded-2xl">
+                <FaUsersCog className="text-5xl text-amber-700" />
+              </div>
+
+              <div>
+
+                <h1 className="text-4xl font-black text-[#2c3e50]">
+                  Panel Administrativo
+                </h1>
+
+                <p className="text-slate-500 mt-2">
+                  Gestiona moderadores y usuarios
+                </p>
+
+              </div>
+
             </div>
 
-            <div>
+            {/* BOTON CREAR MODERADOR */}
+            {esAdministrador && (
 
-              <h1 className="text-4xl font-black text-[#2c3e50]">
-                Panel Administrativo
-              </h1>
+              <button
+                onClick={() => navigate("/crear-moderador")}
+                className="mt-4 bg-amber-700 hover:bg-amber-600 text-white px-5 py-3 rounded-xl"
+              >
+                Añadir Moderador
+              </button>
 
-              <p className="text-slate-500 mt-2">
-                Gestiona moderadores y usuarios del sistema
-              </p>
-
-            </div>
+            )}
 
           </div>
 

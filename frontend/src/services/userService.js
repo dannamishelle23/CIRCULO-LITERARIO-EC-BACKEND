@@ -1,69 +1,114 @@
 import api from "./api";
 
-/* CREAR MODERADOR */
+//MODERADORES
+
+// CREAR MODERADOR
 export const createModerator = async (data) => {
-  try {
-    const response = await api.post(
-      "/usuarios/crear-moderador",data);
-    return response.data;
-  } catch (error) {
-    console.error("Error al crear moderador:", error);
-    throw error;
-  }
+
+  const response = await api.post(
+    "/usuarios/crear-moderador",
+    data
+  );
+
+  return response.data;
 };
 
-/* OBTENER MODERADORES */
+// LISTAR MODERADORES
 export const getModerators = async () => {
+
+  const response = await api.get(
+    "/usuarios/listar-moderadores"
+  );
+
+  return response.data["Moderadores registrados"];
+};
+
+// DETALLE MODERADOR
+export const getModeratorById = async (id) => {
+
   try {
-    const response = await api.get("/usuarios/listar-moderadores");
-    return response.data["Moderadores registrados"];
+
+    const response = await api.get(
+      `/usuarios/detalle-moderador/${id}`
+    );
+
+    return response.data.moderador;
+
   } catch (error) {
-    console.error("Error al obtener moderadores:", error);
+
+    console.error(error);
+
     throw error;
   }
 };
 
-//Deshabilitar o suspender moderadores (SOLO LO HACE EL ADMINISTRADOR)
+// SUSPENDER MODERADOR
 export const suspendModerator = async (id) => {
+
+  const response = await api.patch(
+    `/usuarios/deshabilitar-moderador/${id}`
+  );
+
+  return response.data;
+};
+
+//USUARIOS
+
+// LISTAR USUARIOS
+export const getUsers = async () => {
+
+  const response = await api.get(
+    "/usuarios/listar-usuarios"
+  );
+
+  return response.data["Usuarios registrados"];
+};
+
+// DETALLE USUARIO
+export const getUserById = async (id) => {
+
   try {
-    const response = await api.post(`/usuarios/suspender-moderador/${id}`);
-    return response.data;
+
+    const response = await api.get(
+      `/usuarios/detalle-usuario/${id}`
+    );
+
+    return response.data.usuario;
+
   } catch (error) {
-    console.error("Error al suspender moderador:", error);
+
+    console.error(error);
+
     throw error;
   }
-}
+};
 
-//Suspender usuario (LO HACE EL MODERADOR Y EL ADMINISTRADOR)
+// SUSPENDER USUARIO
 export const blockUser = async (id) => {
-try {
-  const response = await api.post(`/usuarios/suspender-usuario/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error("Error al suspender usuario:", error);
-    throw error;
-  }
+
+  const response = await api.patch(
+    `/usuarios/suspender-usuario/${id}`
+  );
+
+  return response.data;
 };
 
-//Eliminar usuario (SOLO LO HACE EL ADMINISTRADOR)
-export const deleteUser = async (id) => {
-    try {
-    const response = await api.delete(`/usuarios/eliminar-usuario/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error("Error al eliminar usuario:", error);
-    throw error;
-  }
-};
-
-//Reactivar cuenta de usuario (LO HACE EL MODERADOR Y EL ADMINISTRADOR)
+// REACTIVAR USUARIO
 export const reactivateUser = async (id) => {
-  try {
-    const response = await api.post(`/usuarios/reactivar-usuario/${id}`);
-    return response.data;
-  }
-  catch (error) {
-    console.error("Error al reactivar usuario:", error);
-    throw error;
-  }
-}
+
+  const response = await api.patch(
+    `/usuarios/reactivar-usuario/${id}`
+  );
+
+  return response.data;
+};
+
+// ELIMINAR USUARIO
+export const deleteUser = async (id) => {
+
+  const response = await api.delete(
+    `/usuarios/eliminar-usuario/${id}`
+  );
+
+  return response.data;
+};

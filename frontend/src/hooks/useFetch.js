@@ -5,8 +5,9 @@ import { toast } from "react-toastify"
 export function useFetch() {
 
     const fetchDataBackend = useCallback(async (url, data = null, method = "GET", headers = {}) => {
-        const loadingToast = toast.loading("Procesando solicitud...")
+
         try {
+
             const options = {
                 method,
                 url,
@@ -21,15 +22,18 @@ export function useFetch() {
             }
 
             const response = await axios(options)
-            toast.dismiss(loadingToast)
+
             toast.success(response?.data?.msg)
+
             return response?.data
 
         } catch (error) {
-            toast.dismiss(loadingToast)
+
             console.error(error)
+
             toast.error(error.response?.data?.msg)
         }
+
     }, [])
 
     return fetchDataBackend

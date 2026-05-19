@@ -5,10 +5,13 @@ import Home from "./pages/Home";
 import Register from "./pages/Register";
 import Confirm from "./pages/Confirm";
 import Forgot from "./pages/Forgot";
+import Reset from "./pages/Reset";
 import Comunidad from "./pages/Comunidad";
 import Beneficios from "./pages/Beneficios";
 import Contacto from "./pages/Contacto";
 import AdminUsers from "./pages/AdminUsers";
+import CreateModerator from "./pages/CreateModerator";
+import UserDetail from "./pages/UserDetail";
 import Forbidden from "./pages/Forbidden";
 import Details from "./pages/Details";
 import PrivateRoute from "./components/PrivateRoute";
@@ -57,6 +60,11 @@ function App() {
           <Route 
             path="/forgot"
             element={<Forgot />} 
+          />
+
+          <Route 
+            path="/reset/password/:token"
+            element={<Reset />} 
           />
 
           {/* PRIVADAS */}
@@ -108,6 +116,24 @@ function App() {
               <AdminRoute>
                 <AdminUsers />
               </AdminRoute>}
+          />
+
+          <Route
+            path="/crear-moderador"
+            element={
+              <AdminRoute>
+                <CreateModerator />
+              </AdminRoute>
+            }
+          />
+
+          <Route
+            path="/detalle/:tipo/:id"
+            element={
+              <AdminRoute>
+                <UserDetail />
+              </AdminRoute>
+            }
           />
 
           <Route
