@@ -22,7 +22,7 @@ export const Forgot = () => {
     }
 
     return (
-        <div className="flex flex-col sm:flex-row min-h-screen bg-[#FEF2E1]">
+        <div className="flex flex-col sm:flex-row min-h-screen bg-[#f8f9fa] font-sans">
 
             <ToastContainer />
 
@@ -82,3 +82,5 @@ export const Forgot = () => {
         </div>
     )
 }
+
+export default Forgot

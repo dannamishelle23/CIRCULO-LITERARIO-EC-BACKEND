@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Register from "./pages/Register";
 import Confirm from "./pages/Confirm";
+import Forgot from "./pages/Forgot";
 import Comunidad from "./pages/Comunidad";
 import Beneficios from "./pages/Beneficios";
 import Contacto from "./pages/Contacto";
@@ -51,6 +52,11 @@ function App() {
           <Route
             path="/auth/confirmar/:token"
             element={<Confirm />}
+          />
+
+          <Route 
+            path="/forgot"
+            element={<Forgot />} 
           />
 
           {/* PRIVADAS */}
