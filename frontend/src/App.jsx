@@ -16,11 +16,15 @@ import Contacto from "./pages/Contacto";
 import Details from "./pages/Details";
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import CreateModerator from "./pages/CreateModerator";
 import ManageUsers from "./pages/admin/ManageUsers";
 import ManageClubs from "./pages/admin/ManageClubs";
+import ClubDetail from "./pages/admin/ClubDetail";
+import MyClubs from "./pages/moderator/MyClubs";
+import MyClubDetail from "./pages/moderator/MyClubDetail";
+import Forbidden from "./pages/Forbidden";
 
-import ModeratorUsers from "./pages/ModeratorUsers";
-import CreateModerator from "./pages/CreateModerator";
+import ModeratorDashboard from "./pages/moderator/ModeratorDashboard";
 
 import Profile from "./pages/Profile";
 import Update from "./pages/Update";
@@ -160,6 +164,21 @@ function App() {
             element={<ManageClubs />}
           />
 
+          <Route
+            path="/clubes/:id"
+            element={<ClubDetail />}
+          />
+
+          <Route
+            path="/mis-clubes"
+            element={<MyClubs />}
+          />
+
+          <Route
+            path="/mis-clubes/:id"
+            element={<MyClubDetail />}
+          />
+
           {/* CREAR MODERADOR */}
           <Route
             path="/crear-moderador"
@@ -169,7 +188,7 @@ function App() {
           {/* MODERADOR */}
           <Route
             path="/moderator"
-            element={<ModeratorUsers />}
+            element={<ModeratorDashboard />}
           />
 
           {/* DETALLES */}
@@ -179,6 +198,8 @@ function App() {
           />
 
         </Route>
+
+        <Route path="/forbidden" element={<Forbidden />} />
 
         {/* ========================= */}
         {/* 404 */}

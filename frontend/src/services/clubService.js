@@ -18,7 +18,17 @@ export const getClubs = async () => {
     "/clubes/listar-clubes"
   );
 
-  return response.data["Clubes creados: "];
+  return response.data.clubes;
+};
+
+/* DETALLE DE CLUB POR ID */
+export const getClubById = async (clubId) => {
+
+  const response = await api.get(
+    `/clubes/detalle-club/${clubId}`
+  );
+
+  return response.data.club;
 };
 
 /* ASIGNAR MODERADOR */
@@ -33,3 +43,20 @@ export const assignModerator = async (
 
   return response.data;
 };
+
+/* VISUALIZAR MIS CLUBES ASIGNADOS */
+export const getMyAssignedClubs = async () => {
+
+  const response = await api.get(
+    "/clubes/mis-clubes"
+  );
+  return response.data.clubes;
+};
+
+/* DETALLE DE MI CLUB ASIGNADO POR ID */
+export const getMyAssignedClubById = async (clubId) => {
+  const response = await api.get(
+    `/clubes/mis-clubes/${clubId}`
+  );
+  return response.data.club;
+}

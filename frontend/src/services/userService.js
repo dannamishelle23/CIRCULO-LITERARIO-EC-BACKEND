@@ -10,7 +10,7 @@ export const createModerator = async (data) => {
     data
   );
 
-  return response.data;
+  return response.data.data.moderador;
 };
 
 // LISTAR MODERADORES
@@ -20,7 +20,7 @@ export const getModerators = async () => {
     "/usuarios/listar-moderadores"
   );
 
-  return response.data["Moderadores registrados"];
+  return response.data.data.moderadores;
 };
 
 // DETALLE MODERADOR
@@ -32,7 +32,7 @@ export const getModeratorById = async (id) => {
       `/usuarios/detalle-moderador/${id}`
     );
 
-    return response.data.moderador;
+    return response.data.data.moderador;
 
   } catch (error) {
 
@@ -61,7 +61,7 @@ export const getUsers = async () => {
     "/usuarios/listar-usuarios"
   );
 
-  return response.data["Usuarios registrados"];
+  return response.data.data.usuarios;
 };
 
 // DETALLE USUARIO
@@ -111,4 +111,27 @@ export const deleteUser = async (id) => {
   );
 
   return response.data;
+};
+
+// ==========================================
+// GESTIÓN EXCLUSIVA DE PERFIL (NUEVO)
+// ==========================================
+// Actualiza los datos de perfil e incluye soporte para la subida de archivos (Avatar).
+export const updateProfile = async (id, formData) => {
+  try {
+    const response = await api.put(
+      `/usuarios/actualizar-perfil/${id}`, // Asegúrate de que esta ruta coincida con tu enrutador de Express
+      formData,
+      {
+        headers: {
+          // Obligatorio para que Axios configure correctamente los boundaries del archivo binario
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data; // Retorna { msg, usuario } enviado por tu backend
+  } catch (error) {
+    console.error("Error en updateProfile service:", error);
+    throw error;
+  }
 };

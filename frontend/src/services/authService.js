@@ -1,87 +1,80 @@
-import axios from "axios"
-import { useCallback } from "react"
-import { toast } from "react-toastify"
+import api from "./api";
 
-export function useFetch() {
+//Maneja login y localstorage
+export const login = async (data) => {
 
-    const fetchDataBackend = useCallback(async (
-        url,
-        data = null,
-        method = "GET",
-        headers = {},
-        showToast = true
-    ) => {
+  const response = await api.post("/auth/login", data);
 
-        let toastId = null
+  // GUARDAR TOKEN
+  if (response.data.usuario?.token) {
+    localStorage.setItem(
+      "token",
+      response.data.usuario.token
+    );
+  }
 
-        /* MOSTRAR TOAST SOLO SI SE NECESITA */
-        if (showToast) {
+  // GUARDAR USUARIO COMPLETO
+  if (response.data.usuario) {
+    localStorage.setItem(
+      "usuario",
+      JSON.stringify(response.data.usuario)
+    );
+  }
 
-            toastId = toast.loading(
-                "Procesando solicitud..."
-            )
-        }
+  return response.data;
+};
 
-        try {
+/*REGISTER*/
+export const register = async (data) => {
 
-            const options = {
-                method,
-                url,
-                headers: {
-                    "Content-Type": "application/json",
-                    ...headers,
-                }
-            }
+  const response = await api.post("/auth/register", data);
 
-            /* BODY SOLO EN POST/PUT/PATCH */
-            if (
-                method.toUpperCase() !== "GET" &&
-                data !== null
-            ) {
+  return response.data;
+};
 
-                options.data = data
-            }
+/*VALIDAR SI ES ADMIN*/
+export const isAdmin = () => {
 
-            const response = await axios(options)
+  const usuario = JSON.parse(
+    localStorage.getItem("usuario")
+  );
 
-            /* TOAST SUCCESS */
-            if (showToast) {
+  return usuario?.rol?.toLowerCase() === "administrador";
+};
 
-                toast.update(toastId, {
-                    render:
-                        response?.data?.msg ||
-                        "Operación exitosa",
-                    type: "success",
-                    isLoading: false,
-                    autoClose: 3000,
-                    closeOnClick: true
-                })
-            }
+/*VALIDAR SI ES LECTOR*/
+export const isLector = () => {
 
-            return response?.data
+  const usuario = JSON.parse(
+    localStorage.getItem("usuario")
+  );
 
-        } catch (error) {
+  return usuario?.rol?.toLowerCase() === "lector";
+};
 
-            console.error(error)
+/*VALIDAR SI ES AUTOR*/
+export const isAutor = () => {
 
-            /* TOAST ERROR */
-            if (showToast) {
+  const usuario = JSON.parse(
+    localStorage.getItem("usuario")
+  );
 
-                toast.update(toastId, {
-                    render:
-                        error.response?.data?.msg ||
-                        "Ocurrió un error",
-                    type: "error",
-                    isLoading: false,
-                    autoClose: 3000,
-                    closeOnClick: true
-                })
-            }
+  return usuario?.rol?.toLowerCase() === "autor";
+};
 
-            return null
-        }
+/*OBTENER ROL*/
+export const getRole = () => {
 
-    }, [])
+  const usuario = JSON.parse(
+    localStorage.getItem("usuario")
+  );
 
-    return fetchDataBackend
-}
+  return usuario?.rol;
+};
+
+/*LOGOUT*/
+export const logout = () => {
+
+  localStorage.removeItem("token");
+  localStorage.removeItem("usuario");
+};

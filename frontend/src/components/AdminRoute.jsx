@@ -7,11 +7,11 @@ const AdminRoute = ({ children }) => {
     localStorage.getItem("usuario")
   );
 
-  const rol = usuario?.rol;
+  const rol = usuario?.rol?.toLowerCase();
 
   return (
-    rol === "Administrador" ||
-    rol === "Moderador"
+    rol === "administrador" ||
+    rol === "moderador"
   )
     ? children
     : <Navigate to="/forbidden" replace />;
