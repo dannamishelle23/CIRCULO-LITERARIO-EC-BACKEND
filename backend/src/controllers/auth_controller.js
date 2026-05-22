@@ -8,12 +8,7 @@ const registro = async (req, res) => {
   try {
     const { email, username, password } = req.body
 
-    if (Object.values(req.body).includes("")) {
-      return res.status(400).json({
-        msg: "Todos los campos deben ser completados de forma obligatoria."
-      })
-    }
-
+    //Verificar usuario existente
     const usuarioExistente = await Usuarios.findOne({
       $or: [{ email }, { username }]
     })
@@ -29,14 +24,16 @@ const registro = async (req, res) => {
       rol: "Usuario"
     })
 
+    //Encriptar contraseña
     nuevoUsuario.password = await nuevoUsuario.encryptPassword(password)
 
+    //Generar token
     const token = nuevoUsuario.createToken()
     nuevoUsuario.token = token
 
     await nuevoUsuario.save()
 
-    //Envío de manejo con manejo de errores
+    //Enviar correo (manejar errores)
     try {
       await sendMailToRegister(email, token)
       console.log("Correo enviado correctamente")
@@ -50,7 +47,7 @@ const registro = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({
-      msg: `Error en el servidor - ${error.message}`
+      msg: "Error al procesar la solicitud"
     })
   }
 }
@@ -67,7 +64,7 @@ const confirmarMail = async(req,res) => {
     res.status(200).json({msg: "Cuenta confirmada, ya puedes iniciar sesión."})
   } catch (error) {
     console.error(error)
-    res.status(500).json({msg: `Error al procesar la solicitud - ${error}`})
+    res.status(500).json({msg: "Error al procesar la solicitud"})
   }
 }
 
@@ -75,7 +72,6 @@ const confirmarMail = async(req,res) => {
 const recuperarPassword = async(req,res) => {
     try {
         const {identifier} = req.body
-        if (!identifier) return res.status(400).json({msg: "Debes ingresar tu correo o nombre de usuario."})
         const usuario = await Usuarios.findOne({
           $or: [
             {email: identifier},
@@ -93,7 +89,7 @@ const recuperarPassword = async(req,res) => {
         res.status(200).json({msg: "Si el usuario existe, recibirás un correo electrónico para reestablecer tu contraseña."})
     } catch(error) {
         console.error(error)
-        res.status(500).json({msg: `Error al procesar la solicitud - ${error}`})
+        res.status(500).json({msg: "Error al procesar la solicitud"})
     }
 }
 
@@ -115,18 +111,6 @@ const crearNuevoPassword = async (req, res) => {
   try {
     const { password, confirmPassword } = req.body
     const { token } = req.params
-
-    if (!password || !confirmPassword) {
-      return res.status(400).json({
-        msg: "Debes llenar todos los campos de forma obligatoria."
-      })
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({
-        msg: "La contraseña debe tener mínimo 6 caracteres."
-      })
-    }
 
     if (password !== confirmPassword) {
       return res.status(400).json({
@@ -163,13 +147,7 @@ const crearNuevoPassword = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { identifier, password } = req.body
-
-    if (!identifier || !password) {
-      return res.status(400).json({
-        msg: "Debes completar todos los campos."
-      })
-    }
-
+    
     // Buscar al usuario por email o username
     const usuarioBDD = await Usuarios.findOne({
       $or: [

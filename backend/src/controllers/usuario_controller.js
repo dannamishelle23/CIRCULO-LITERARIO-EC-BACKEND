@@ -2,60 +2,47 @@ import Usuarios from "../models/Usuarios.js"
 import { crearTokenJWT } from "../middlewares/JWT.js"
 import { sendMailToCreateModerator } from "../helpers/sendMail.js"
 import {subirImagenCloudinary} from "../helpers/uploadCloudinary.js"
+import { v2 as cloudinary } from 'cloudinary'
 import mongoose from "mongoose"
 
 //Creación de endpoint para visualizar perfil (Administrador - Moderador - Lector y/o Autor)
-const perfil = (req,res) => {
+const perfil = (req, res) => {
+
   if (!req.usuarioHeader) {
-    return res.status(401).json({msg: "No autorizado"})
+    return res.status(401).json({
+      msg: "No autorizado."
+    })
   }
-  const {token, confirmEmail, createdAt, updatedAt, __v, ...datosPerfil} = req.usuarioHeader
+
+  const {
+    token,
+    confirmEmail,
+    createdAt,
+    updatedAt,
+    __v,
+    ...datosPerfil
+  } = req.usuarioHeader
+
   res.status(200).json(datosPerfil)
 }
 
-//Creación de endpoint para actualizar el perfil (Administrador - Moderador - Lector y/o Autor)
-const actualizarPerfil = async(req,res) => {
+//Actualizar perfil
+const actualizarPerfil = async (req, res) => {
+
   try {
-    const {id} = req.params
-    const {nombres, apellidos, provincia, username, email} = req.body
-    if ( !mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({msg: "ID de usuario no válido."})
+
+    const { id } = req.params
+
+    const {
+      nombres,
+      apellidos,
+      provincia,
+      username,
+      email,
+      avatar
+    } = req.body || {}
+
     const usuarioBDD = await Usuarios.findById(id)
-    if (!usuarioBDD) return res.status(404).json({msg: "Usuario no encontrado."})
-    if (Object.values(req.body).includes("")) return res.status(400).json({msg: "Debes completar todos los campos."})
-    if (usuarioBDD.email !== email)
-    {
-      const emailExistente = await Usuarios.findOne({email})
-      if (emailExistente) {
-        return res.status(404).json({msg: "El email ya se encuentra registrado."})
-      }
-    }
-    usuarioBDD.nombres = nombres ?? usuarioBDD.nombres
-    usuarioBDD.apellidos = apellidos ?? usuarioBDD.apellidos
-    usuarioBDD.provincia = provincia ?? usuarioBDD.provincia
-    usuarioBDD.username = username ?? usuarioBDD.username
-    usuarioBDD.email = email ?? usuarioBDD.email
-
-    await usuarioBDD.save()
-    res.status(200).json({msg: "Perfil actualizado con éxito."})
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({msg: `Error en el servidor - ${error}`})
-  }
-}
-
-//Creación de endpoint para actualizar la contraseña (Administrador - Moderador - Lector y/o Autor)
-const actualizarPassword = async(req,res) => {
-  try {
-
-    const { passwordActual, passwordNuevo } = req.body
-
-    if (!passwordActual || !passwordNuevo) {
-      return res.status(400).json({
-        msg: "Todos los campos son obligatorios."
-      })
-    }
-
-    const usuarioBDD = await Usuarios.findById(req.usuarioHeader._id)
 
     if (!usuarioBDD) {
       return res.status(404).json({
@@ -63,7 +50,129 @@ const actualizarPassword = async(req,res) => {
       })
     }
 
-    // Validar contraseña actual
+    //Debe enviar al menos un dato
+    if (
+      Object.keys(req.body || {}).length === 0 &&
+      !req.files?.avatar
+    ) {
+      return res.status(400).json({
+        msg: "Debes enviar al menos un campo para actualizar."
+      })
+    }
+
+    //Validar email repetido
+    if (email && usuarioBDD.email !== email) {
+
+      const emailExistente = await Usuarios.findOne({ email })
+
+      if (emailExistente) {
+        return res.status(400).json({
+          msg: "El correo ya se encuentra registrado."
+        })
+      }
+    }
+
+    //Validar username repetido
+    if (username && usuarioBDD.username !== username) {
+
+      const usernameExistente = await Usuarios.findOne({
+        username
+      })
+
+      if (usernameExistente) {
+        return res.status(400).json({
+          msg: "El nombre de usuario ya existe."
+        })
+      }
+    }
+
+    //Subir avatar
+    if (req.files?.avatar) {
+
+      if (usuarioBDD.avatarID) {
+        await cloudinary.uploader.destroy(
+          usuarioBDD.avatarID
+        )
+      }
+
+      const {
+        secure_url,
+        public_id
+      } = await subirImagenCloudinary(
+        req.files.avatar.tempFilePath,
+        "Usuarios"
+      )
+
+      usuarioBDD.avatar = secure_url
+      usuarioBDD.avatarID = public_id
+    }
+
+    usuarioBDD.nombres =
+      nombres ?? usuarioBDD.nombres
+
+    usuarioBDD.apellidos =
+      apellidos ?? usuarioBDD.apellidos
+
+    usuarioBDD.provincia =
+      provincia ?? usuarioBDD.provincia
+
+    usuarioBDD.username =
+      username ?? usuarioBDD.username
+
+    usuarioBDD.email =
+      email ?? usuarioBDD.email
+
+    usuarioBDD.avatar =
+      avatar ?? usuarioBDD.avatar
+
+    await usuarioBDD.save()
+
+    const {
+      token,
+      confirmEmail,
+      password,
+      createdAt,
+      updatedAt,
+      __v,
+      ...perfilActualizado
+    } = usuarioBDD.toObject()
+
+    res.status(200).json({
+      msg: "Perfil actualizado correctamente.",
+      usuario: perfilActualizado
+    })
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      msg: "Error al procesar la solicitud."
+    })
+  }
+}
+
+//Actualizar contraseña
+const actualizarPassword = async (req, res) => {
+
+  try {
+
+    const {
+      passwordActual,
+      passwordNuevo
+    } = req.body
+
+    const usuarioBDD = await Usuarios.findById(
+      req.usuarioHeader._id
+    )
+
+    if (!usuarioBDD) {
+      return res.status(404).json({
+        msg: "Usuario no encontrado."
+      })
+    }
+
+    //Validar password actual
     const verificarPassword =
       await usuarioBDD.matchPassword(passwordActual)
 
@@ -72,7 +181,8 @@ const actualizarPassword = async(req,res) => {
         msg: "La contraseña actual no es correcta."
       })
     }
-    // Validar que el usuario no reutilice la misma contraseña al cambiar
+
+    //Evitar reutilizar contraseña
     const mismaPassword =
       await usuarioBDD.matchPassword(passwordNuevo)
 
@@ -81,100 +191,143 @@ const actualizarPassword = async(req,res) => {
         msg: "La nueva contraseña no puede ser igual a la actual."
       })
     }
-    // Encriptar nueva contraseña
+
+    //Encriptar nueva contraseña
     usuarioBDD.password =
       await usuarioBDD.encryptPassword(passwordNuevo)
 
     await usuarioBDD.save()
 
-    res.status(200).json({msg: "Contraseña actualizada con éxito."})
+    res.status(200).json({
+      msg: "Contraseña actualizada correctamente."
+    })
 
   } catch (error) {
+
     console.error(error)
+
     res.status(500).json({
-      msg: `Error en el servidor - ${error}`
+      msg: "Error al procesar la solicitud."
     })
   }
 }
 
-// ADMINISTRACION DE USUARIOS MODERADORES Y LECTORES/AUTORES
+//Registrar moderador
+const registrarModerador = async (req, res) => {
 
-//1. Registro de un moderador (lo hace el administrador)
-const registrarModerador = async(req,res) => {
   try {
-    const {nombres, apellidos, fechaNacimiento, provincia, username, email} = req.body
-    if (Object.values(req.body).includes("")) return res.status(400).json({msg: "Debes completar todos los campos."})
-    //Verificar email existente
-    const emailExistente = await Usuarios.findOne({email})
+
+    const {
+      nombres,
+      apellidos,
+      fechaNacimiento,
+      provincia,
+      username,
+      email
+    } = req.body
+
+    //Validar email existente
+    const emailExistente = await Usuarios.findOne({
+      email
+    })
+
     if (emailExistente) {
-      return res.status(404).json({msg: "El email ya se encuentra registrado."})
+      return res.status(400).json({
+        msg: "El correo ya se encuentra registrado."
+      })
     }
-    //Verificar username existente
-    const usernameExistente = await Usuarios.findOne({username})
+
+    //Validar username existente
+    const usernameExistente =
+      await Usuarios.findOne({ username })
+
     if (usernameExistente) {
-      return res.status(404).json({msg: "El nombre de usuario ya existe."})
+      return res.status(400).json({
+        msg: "El nombre de usuario ya existe."
+      })
     }
-    //Generar contraseña temporal
-    const passwordTemporal = Math.random().toString(36).toUpperCase().slice(2,8)
-    //Crear nuevo moderador
+
+    //Password temporal
+    const passwordTemporal =
+      Math.random()
+        .toString(36)
+        .toUpperCase()
+        .slice(2, 8)
+
+    //Crear moderador
     const nuevoModerador = new Usuarios({
+
       nombres,
       apellidos,
       fechaNacimiento,
       provincia,
       username,
       email,
-      password: await Usuarios.prototype.encryptPassword("MOD-" + passwordTemporal),
+
+      password:
+        await Usuarios.prototype.encryptPassword(
+          "MOD-" + passwordTemporal
+        ),
+
       rol: "Moderador",
+
       creadoPor: req.usuarioHeader._id,
+
       confirmEmail: true
     })
-     // Subir imagen si existe
-    if (req.files?.avatar) {
-      const { secure_url, public_id } =
-        await subirImagenCloudinary(
-          req.files.avatar.tempFilePath
-        )
 
-      nuevoModerador.avatar = secure_url
-      nuevoModerador.avatarID = public_id
-    }
-    //Guardar moderador
     await nuevoModerador.save()
-    //Enviar correo al moderador con sus credenciales de acceso
-    await sendMailToCreateModerator(email, username, "MOD-" + passwordTemporal)
-    res.status(200).json({msg: "Moderador registrado con éxito."})
-  } catch (error) { 
+
+    //Enviar credenciales
+    await sendMailToCreateModerator(
+      email,
+      username,
+      "MOD-" + passwordTemporal
+    )
+
+    res.status(200).json({
+      success: true,
+      message: "Moderador registrado correctamente."
+    })
+
+  } catch (error) {
+
     console.error(error)
+
     res.status(500).json({
-      msg: `Error en el servidor - ${error}`
+      success: false,
+      message: "Error al procesar la solicitud."
     })
   }
 }
 
-//Listar moderadores (activos y suspendidos)
+//Listar moderadores
 const listarModeradores = async (req, res) => {
-    try {
 
-        const moderadores = await Usuarios.find({
-            rol: "Moderador",
-            estadoUsuario: { $ne: "Eliminado" }      //Excluir moderadores eliminados
-        })
-        .select("-password -createdAt -updatedAt -__v -confirmEmail")
-        .populate("creadoPor", "nombres")
+  try {
 
-        res.status(200).json({
-            "Moderadores registrados": moderadores
-        })
+    const moderadores = await Usuarios.find({
+      rol: "Moderador",
+      estadoUsuario: { $ne: "Eliminado" }
+    })
+    .select(
+      "-password -createdAt -updatedAt -__v -confirmEmail"
+    )
+    .populate("creadoPor", "nombres")
 
-    } catch (error) {
+    res.status(200).json({
+      moderadores
+    })
 
-        console.error(error)
+  } catch (error) {
 
-        res.status(500).json({
-            msg: `Error en el servidor - ${error}`
-        })
-    }
+    console.error(error)
+
+    res.status(500).json({
+      success: false,
+      message: "Error al procesar la solicitud."
+    })
+  }
 }
 
 // Visualizar un moderador específico
@@ -182,13 +335,6 @@ const detalleModerador = async(req,res) => {
 
   try {
     const { id } = req.params
-
-    // Validar ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        msg: "ID inválido."
-      })
-    }
 
     // Buscar moderador
     const moderador = await Usuarios.findOne({
@@ -208,12 +354,15 @@ const detalleModerador = async(req,res) => {
     // Validar estado
     if (moderador.estadoUsuario === "Eliminado") {
       return res.status(403).json({
-        msg: "El moderador fue eliminado del sistema."
+        success: false,
+        message: "El moderador fue eliminado del sistema."
       })
     }
 
     res.status(200).json({
-      moderador
+      success: true,
+      message: "Moderador encontrado correctamente",
+      data: { moderador }
     })
 
   } catch (error) {
@@ -221,7 +370,8 @@ const detalleModerador = async(req,res) => {
     console.error(error)
 
     res.status(500).json({
-      msg: `Error en el servidor - ${error}`
+      success: false,
+      message: `Error en el servidor - ${error}`
     })
   }
 }
@@ -233,13 +383,6 @@ const deshabilitarModerador = async(req,res) => {
 
     const { id } = req.params
 
-    // Validar ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        msg: "ID inválido."
-      })
-    }
-
     // Buscar moderador
     const moderadorBDD = await Usuarios.findOne({
       _id: id,
@@ -249,14 +392,16 @@ const deshabilitarModerador = async(req,res) => {
     // Validar existencia
     if (!moderadorBDD) {
       return res.status(404).json({
-        msg: "Moderador no encontrado."
+        success: false,
+        message: "Moderador no encontrado."
       })
     }
 
     // Verificar si ya está suspendido
     if (moderadorBDD.estadoUsuario === "Suspendido") {
       return res.status(400).json({
-        msg: "El moderador ya se encuentra suspendido."
+        success: false,
+        message: "El moderador ya se encuentra suspendido."
       })
     }
 
@@ -266,7 +411,8 @@ const deshabilitarModerador = async(req,res) => {
     await moderadorBDD.save()
 
     res.status(200).json({
-      msg: "Moderador suspendido correctamente."
+      success: true,
+      message: "Moderador suspendido correctamente."
     })
 
   } catch (error) {
@@ -274,7 +420,8 @@ const deshabilitarModerador = async(req,res) => {
     console.error(error)
 
     res.status(500).json({
-      msg: `Error en el servidor - ${error}`
+      success: false,
+      message: `Error en el servidor - ${error}`
     })
   }
 }
@@ -291,7 +438,9 @@ const listarUsuarios = async (req, res) => {
         .populate("creadoPor", "nombres")
 
         res.status(200).json({
-            "Usuarios registrados": usuarios
+          success: true,
+          message: "Usuarios obtenidos correctamente", 
+          data: { usuarios }
         })
 
     } catch (error) {
@@ -309,13 +458,6 @@ const detalleUsuario = async(req,res) => {
 
   try {
     const { id } = req.params
-
-    // Validar ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        msg: "ID inválido."
-      })
-    }
 
     // Buscar usuario
     const usuario = await Usuarios.findOne({
@@ -340,7 +482,9 @@ const detalleUsuario = async(req,res) => {
     }
 
     res.status(200).json({
-      usuario
+      success: true,
+      message: "Usuario encontrado correctamente",
+      data: { usuario }
     })
 
   } catch (error) {
@@ -359,13 +503,6 @@ const suspenderUsuario = async(req,res) => {
   try {
 
     const { id } = req.params
-
-    // Validar ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        msg: "ID inválido."
-      })
-    }
 
     // Evitar auto suspensión
     if (req.usuarioHeader._id.toString() === id) {
@@ -412,7 +549,8 @@ const suspenderUsuario = async(req,res) => {
     await usuarioBDD.save()
 
     res.status(200).json({
-      msg: "Usuario suspendido correctamente."
+      success: true,
+      message: "Usuario suspendido correctamente."
     })
 
   } catch (error) {
@@ -431,13 +569,6 @@ const reactivarUsuario = async(req,res) => {
   try {
 
     const { id } = req.params
-
-    // Validar ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        msg: "ID inválido."
-      })
-    }
 
     // Buscar usuario
     const usuarioBDD = await Usuarios.findById(id)
@@ -478,7 +609,8 @@ const reactivarUsuario = async(req,res) => {
     await usuarioBDD.save()
 
     res.status(200).json({
-      msg: `${usuarioBDD.rol} reactivado correctamente.`
+      success: true,
+      message: `${usuarioBDD.rol} reactivado correctamente.`
     })
 
   } catch (error) {
@@ -486,7 +618,8 @@ const reactivarUsuario = async(req,res) => {
     console.error(error)
 
     res.status(500).json({
-      msg: `Error en el servidor - ${error}`
+      success: false,
+      message: `Error en el servidor - ${error}`
     })
   }
 }
@@ -497,13 +630,6 @@ const eliminarUsuario = async(req,res) => {
   try {
 
     const { id } = req.params
-
-    // Validar ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        msg: "ID inválido."
-      })
-    }
 
     // Evitar auto eliminación
     if (req.usuarioHeader._id.toString() === id) {
@@ -537,7 +663,8 @@ const eliminarUsuario = async(req,res) => {
     await usuarioBDD.save()
 
     res.status(200).json({
-      msg: "Usuario eliminado correctamente."
+      success: true,
+      message: "Usuario eliminado correctamente."
     })
 
   } catch (error) {
@@ -545,7 +672,8 @@ const eliminarUsuario = async(req,res) => {
     console.error(error)
 
     res.status(500).json({
-      msg: `Error en el servidor - ${error}`
+      success: false,
+      message: `Error en el servidor - ${error}`
     })
   }
 }

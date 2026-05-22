@@ -71,7 +71,6 @@ const crearClub = async (req, res) => {
 
 // Listar clubes literarios 
 const listarClubes = async (req, res) => {
-
   try {
 
     let filtro = {}
@@ -107,7 +106,11 @@ const listarClubes = async (req, res) => {
 
     }
 
-    res.status(200).json({"Clubes creados: ": clubes})
+    res.status(200).json({
+      ok: true,
+      msg: "Clubes obtenidos correctamente",
+      clubes
+    })
 
   } catch (error) {
 
@@ -118,6 +121,54 @@ const listarClubes = async (req, res) => {
     })
   }
 }
+
+// DETALLE DE CLUB POR ID
+const detalleClub = async (req, res) => {
+
+  try {
+
+    const { clubId } = req.params
+
+    // VALIDAR ID
+    if (!mongoose.Types.ObjectId.isValid(clubId)) {
+
+      return res.status(400).json({
+        msg: "ID inválido."
+      })
+    }
+
+    // BUSCAR CLUB
+    const club = await Club.findById(clubId)
+      .select("-createdAt -updatedAt -__v")
+      .populate(
+        "moderadores",
+        "nombres apellidos email estadoUsuario"
+      )
+
+    // VALIDAR EXISTENCIA
+    if (!club) {
+
+      return res.status(404).json({
+        msg: "Club no encontrado."
+      })
+    }
+
+    res.status(200).json({
+      ok: true,
+      msg: "Info del club obtenida correctamente",
+      club
+    })
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      ok: false,
+      msg: `Error en el servidor - ${error}`
+    })
+  }
+}  
 
 //Asignar moderadores a clubes literarios (solo lo hace el administrador)
 const asignarModeradorClub = async (req, res) => {
@@ -193,8 +244,126 @@ const asignarModeradorClub = async (req, res) => {
   }
 }
 
+// MIS CLUBES ASIGNADOS
+const misClubesAsignados = async (
+  req,
+  res
+) => {
+
+  try {
+
+    const usuario =
+      req.usuarioHeader
+
+    /* VALIDAR ROL */
+    if (
+      usuario.rol !== "Moderador"
+    ) {
+
+      return res.status(403).json({
+        ok: false,
+        msg:
+          "Solo los moderadores pueden consultar clubes asignados."
+      })
+    }
+
+    const clubes = await Club.find({
+      moderadores: usuario._id
+    })
+      .select(
+        "-createdAt -updatedAt -__v"
+      )
+      .populate(
+        "moderadores",
+        "nombres apellidos email estadoUsuario"
+      )
+
+    if (clubes.length === 0) {
+
+      return res.status(404).json({
+        ok: false,
+        msg:
+          "No tienes clubes asignados."
+      })
+    }
+
+    res.status(200).json({
+      ok: true,
+      msg:
+        "Clubes asignados obtenidos correctamente.",
+      clubes
+    })
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      ok: false,
+      msg:
+        `Error en el servidor - ${error}`
+    })
+  }
+}
+
+// DETALLE DE MI CLUB ASIGNADO
+const detalleMiClub = async (req, res) => {
+
+  try {
+
+    const moderadorId =
+      req.usuarioHeader._id
+
+    const { clubId } = req.params
+
+    // VALIDAR ID
+    if (!mongoose.Types.ObjectId.isValid(clubId)) {
+
+      return res.status(400).json({
+        msg: "ID inválido."
+      })
+    }
+
+    // BUSCAR CLUB
+    const club = await Club.findOne({
+      _id: clubId,
+      moderadores: moderadorId
+    })
+      .select("-createdAt -updatedAt -__v")
+      .populate(
+        "moderadores",
+        "nombres apellidos email estadoUsuario"
+      )
+
+    if (!club) {
+
+      return res.status(404).json({
+        msg: "Club no encontrado o no tienes acceso."
+      })
+    }
+
+    res.status(200).json({
+      ok: true,
+      msg: "Info del club obtenida correctamente",
+      club
+    })
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      ok: false,
+      msg: `Error en el servidor - ${error}`
+    })
+  }
+}
+
 export {
   crearClub,
   listarClubes,
-  asignarModeradorClub
+  detalleClub,
+  asignarModeradorClub,
+  misClubesAsignados,
+  detalleMiClub
 }
