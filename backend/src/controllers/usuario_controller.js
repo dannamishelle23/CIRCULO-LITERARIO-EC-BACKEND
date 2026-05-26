@@ -26,6 +26,36 @@ const perfil = (req, res) => {
   res.status(200).json(datosPerfil)
 }
 
+// Visualizar el perfil de otros usuarios (público)
+const perfilPublicoUsuario = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const usuario = await Usuarios.findById(id).select(
+      "nombres apellidos provincia username avatar email rol createdAt"
+    );
+
+    if (!usuario) {
+      return res.status(404).json({
+        ok: false,
+        msg: "Usuario no encontrado."
+      });
+    }
+
+    res.status(200).json({
+      ok: true,
+      usuario
+    });
+
+  } catch (error) {
+    console.error("Error al obtener perfil público:", error);
+    res.status(500).json({
+      ok: false,
+      msg: "Error en servidor"
+    });
+  }
+};
+
 //Actualizar perfil
 const actualizarPerfil = async (req, res) => {
 
@@ -685,6 +715,7 @@ const eliminarUsuario = async(req,res) => {
 
 export {
     perfil,
+    perfilPublicoUsuario,
     actualizarPerfil,
     actualizarPassword,
     registrarModerador,

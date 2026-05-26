@@ -4,7 +4,7 @@ const ClubMiembrosSchema = new Schema({
 
   club: {
     type: Schema.Types.ObjectId,
-    ref: "Club",
+    ref: "Clubes",
     required: true
   },
 

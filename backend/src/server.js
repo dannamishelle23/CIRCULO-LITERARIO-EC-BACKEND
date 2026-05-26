@@ -8,6 +8,7 @@ import fileUpload from "express-fileupload"
 import authRouter from './routers/auth_routes.js'
 import routerUsuarios from './routers/usuario_routes.js'
 import routerClubes from './routers/club_routes.js'
+import routerClubMiembros from './routers/clubMiembros_routes.js'
 
 // Inicializaciones
 const app = express()
@@ -43,6 +44,9 @@ app.use('/api/usuarios', routerUsuarios)
 
 //Rutas para clubes literarios
 app.use('/api/clubes', routerClubes)
+
+// Rutas para miembros de clubes
+app.use('/api/club-miembros', routerClubMiembros)
 
 // Manejo de una ruta que no sea encontrada
 app.use((req,res) => res.status(404).send("Error 404: Endpoint no encontrado."))

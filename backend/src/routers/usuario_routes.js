@@ -1,11 +1,12 @@
 import {Router} from 'express'
-import { perfil, actualizarPerfil, actualizarPassword, registrarModerador, listarModeradores, detalleModerador, deshabilitarModerador, listarUsuarios, detalleUsuario, suspenderUsuario, reactivarUsuario, eliminarUsuario } from '../controllers/usuario_controller.js'
+import { perfil, perfilPublicoUsuario, actualizarPerfil, actualizarPassword, registrarModerador, listarModeradores, detalleModerador, deshabilitarModerador, listarUsuarios, detalleUsuario, suspenderUsuario, reactivarUsuario, eliminarUsuario } from '../controllers/usuario_controller.js'
 import { verificarTokenJWT } from '../middlewares/JWT.js'
 import { validarActualizarPerfil, validarMongoID, validarActualizarPassword, validarRegistrarModerador } from '../validators/usuario_validator.js'
 import { validarCampos } from '../middlewares/validar_campos.js'
 
 const router = Router()
-router.get('/perfil', verificarTokenJWT, perfil)
+router.get('/perfil', verificarTokenJWT, perfil)       //Visualizar perfil del usuario autenticado
+router.get("/perfil/:id",verificarTokenJWT,validarMongoID,validarCampos, perfilPublicoUsuario)    //Visualizar perfil público de un usuario por su ID (para lectores y autores)
 router.patch('/actualizar-perfil/:id', verificarTokenJWT, validarMongoID, validarActualizarPerfil, validarCampos, actualizarPerfil)
 router.patch('/actualizar-password', verificarTokenJWT, validarActualizarPassword, validarCampos, actualizarPassword)
 
