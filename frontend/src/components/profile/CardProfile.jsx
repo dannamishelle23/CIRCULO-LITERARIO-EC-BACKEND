@@ -51,18 +51,9 @@ export const CardProfile = ({ profile, onProfileUpdated }) => {
 
     try {
       setIsUploading(true)
-
-      // 1. Preparamos el FormData requerido por el backend (req.files.avatar)
       const formData = new FormData()
       formData.append("avatar", file)
-      // 2. Adjuntamos los datos actuales del perfil para pasar las validaciones del backend
-      formData.append("nombres", profile?.nombres || "")
-      formData.append("apellidos", profile?.apellidos || "")
-      formData.append("username", profile?.username || "")
-      formData.append("email", profile?.email || "")
-      formData.append("provincia", profile?.provincia || "")
 
-      // 3. Ejecutamos la petición directamente usando fetch nativo para evitar conflictos con JSON planos
       const url = `${API_BASE_URL}/usuarios/actualizar-perfil/${userId}`
       const authHeaders = getAuthHeaders() // Usualmente trae { 'Authorization': 'Bearer ...' }
       
@@ -77,6 +68,7 @@ export const CardProfile = ({ profile, onProfileUpdated }) => {
 
       const data = await response.json()
 
+      console.log(data)
       if (response.ok) {
         alert("Foto de perfil actualizada con éxito")
         if (onProfileUpdated) {

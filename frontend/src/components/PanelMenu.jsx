@@ -14,8 +14,17 @@ export default function PanelMenu() {
         onClick={() => navigate("/menu")}
         className="inline-flex items-center gap-3 bg-white border border-gray-200 text-[#2c3e50] px-4 py-2 rounded-xl shadow-sm hover:bg-gray-50 transition"
       >
-        <div className="w-8 h-8 rounded-full bg-[#e67e22] text-white flex items-center justify-center font-black">
-          {inicial}
+        
+        <div className="w-8 h-8 rounded-full overflow-hidden bg-[#e67e22] text-white flex items-center justify-center font-black">
+          {usuario?.avatar ? (
+            <img
+              src={usuario.avatar}
+              alt="Avatar"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            inicial
+          )}
         </div>
         <div className="text-left leading-tight">
           <p className="text-sm font-semibold">{usuario?.username ?? "Mi Cuenta"}</p>

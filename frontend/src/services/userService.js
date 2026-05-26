@@ -73,7 +73,7 @@ export const getUserById = async (id) => {
       `/usuarios/detalle-usuario/${id}`
     );
 
-    return response.data.usuario;
+    return response.data.data.usuario;
 
   } catch (error) {
 
@@ -134,4 +134,10 @@ export const updateProfile = async (id, formData) => {
     console.error("Error en updateProfile service:", error);
     throw error;
   }
+};
+
+// VER PERFIL PÚBLICO DE USUARIO
+export const getPerfilUsuario = async (id) => {
+  const response = await api.get(`/usuarios/perfil/${id}`);
+  return response.data.usuario;
 };

@@ -1,21 +1,30 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUsers, blockUser, reactivateUser } from "../../services/userService";
-import { getMyAssignedClubs } from "../../services/clubService";
+import { 
+  getMyAssignedClubs, 
+  listarSolicitudesClub, 
+  aprobarSolicitudClub, 
+  rechazarSolicitudClub 
+} from "../../services/clubService";
 import { 
   FaUsersCog, 
   FaEye, 
   FaBookOpen, 
   FaUserFriends, 
   FaBan, 
-  FaCheckCircle 
+  FaCheckCircle,
+  FaTimesCircle,
+  FaClock
 } from "react-icons/fa";
 import PanelMenu from "../../components/PanelMenu";
 
 export default function ModeratorDashboard() {
   const [users, setUsers] = useState([]);
   const [clubes, setClubes] = useState([]);
-  const [activeTab, setActiveTab] = useState("clubes"); // 'clubes' o 'usuarios'
+  const [solicitudesPorClub, setSolicitudesPorClub] = useState({}); // Almacena { clubId: [solicitudes] }
+  const [activeTab, setActiveTab] = useState("clubes"); 
+  const [loadingSolicitudes, setLoadingSolicitudes] = useState({});
   const navigate = useNavigate();
 
   const usuarioLogueado = JSON.parse(localStorage.getItem("usuario"));
@@ -26,6 +35,22 @@ export default function ModeratorDashboard() {
       const clubesAsignados = await getMyAssignedClubs();
       setUsers(usuarios);
       setClubes(clubesAsignados);
+
+      // Cargar las solicitudes pendientes automáticamente para cada club asignado
+      clubesAsignados.forEach(async (club) => {
+        try {
+          const res = await listarSolicitudesClub(club._id);
+          if (res.ok) {
+            setSolicitudesPorClub(prev => ({
+              ...prev,
+              [club._id]: res.solicitudes
+            }));
+          }
+        } catch (err) {
+          console.error(`Error cargando solicitudes del club ${club._id}:`, err);
+        }
+      });
+
     } catch (error) {
       console.error(error);
     }
@@ -35,6 +60,42 @@ export default function ModeratorDashboard() {
     fetchData();
   }, []);
 
+  // Controladores de Solicitudes (Aprobar / Rechazar)
+  const handleAprobar = async (solicitudId, clubId) => {
+    if (!window.confirm("¿Estás seguro de que deseas aprobar a este usuario en el club?")) return;
+    try {
+      setLoadingSolicitudes(prev => ({ ...prev, [solicitudId]: true }));
+      const res = await aprobarSolicitudClub(solicitudId);
+      if (res.ok) {
+        alert(res.msg || "Usuario aprobado con éxito.");
+        fetchData(); // Recargamos para actualizar contadores y listas
+      }
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.msg || "Error al aprobar la solicitud.");
+    } finally {
+      setLoadingSolicitudes(prev => ({ ...prev, [solicitudId]: false }));
+    }
+  };
+
+  const handleRechazar = async (solicitudId, clubId) => {
+    if (!window.confirm("¿Estás seguro de que deseas rechazar esta solicitud?")) return;
+    try {
+      setLoadingSolicitudes(prev => ({ ...prev, [solicitudId]: true }));
+      const res = await rechazarSolicitudClub(solicitudId);
+      if (res.ok) {
+        alert(res.msg || "Solicitud rechazada.");
+        fetchData(); 
+      }
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.msg || "Error al rechazar la solicitud.");
+    } finally {
+      setLoadingSolicitudes(prev => ({ ...prev, [solicitudId]: false }));
+    }
+  };
+
+  // Bloquear / Reactivar Usuarios Generales
   const handleBlock = async (id) => {
     const confirmBlock = window.confirm("¿Seguro que deseas suspender temporalmente a este usuario?");
     if (!confirmBlock) return;
@@ -85,7 +146,7 @@ export default function ModeratorDashboard() {
           </div>
         </div>
 
-        {/* BARRA DE PESTAÑAS (TABS INTERNAS) */}
+        {/* BARRA DE PESTAÑAS */}
         <div className="flex border-b border-gray-200 mb-6 gap-2">
           <button
             type="button"
@@ -114,44 +175,97 @@ export default function ModeratorDashboard() {
           </button>
         </div>
 
-        {/* PESTAÑA 1: CLUBES */}
+        {/* PESTAÑA 1: CLUBES + SOLICITUDES DE UNIÓN */}
         {activeTab === "clubes" && (
-          <div className="transition-opacity duration-200">
+          <div className="transition-opacity duration-200 space-y-6">
             {clubes.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {clubes.map((club) => (
-                  <div
-                    key={club._id}
-                    className="bg-white border border-gray-100 rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-amber-200 transition flex flex-col justify-between"
-                  >
-                    <div>
-                      <h3 className="text-lg font-black text-[#2c3e50] truncate">
-                        {club.nombre}
-                      </h3>
-                      <p className="text-xs text-gray-500 font-medium line-clamp-2 mt-1 mb-4">
-                        {club.descripcion}
-                      </p>
-                    </div>
+              <div className="grid grid-cols-1 gap-6">
+                {clubes.map((club) => {
+                  const solicitudes = solicitudesPorClub[club._id] || [];
 
-                    <div className="flex items-center justify-between mt-2 pt-3 border-t border-gray-50">
-                      <div className="flex gap-1.5">
-                        <span className="bg-amber-50 text-[#e67e22] px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider">
-                          {club.generoLiterario}
-                        </span>
-                        <span className="bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider">
-                          {club.estadoClub ?? "Activo"}
-                        </span>
+                  return (
+                    <div
+                      key={club._id}
+                      className="bg-white border border-gray-100 rounded-3xl p-6 shadow-2xs hover:border-amber-100 transition flex flex-col justify-between gap-6"
+                    >
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+                        <div>
+                          <h3 className="text-lg font-black text-[#2c3e50] uppercase tracking-tight">
+                            {club.nombre}
+                          </h3>
+                          <p className="text-xs text-gray-500 font-medium line-clamp-2 mt-1">
+                            {club.descripcion}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="bg-amber-50 text-[#e67e22] px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider">
+                            {club.generoLiterario}
+                          </span>
+                          <span className="bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider">
+                            {club.estadoClub ?? "Activo"}
+                          </span>
+                          <button
+                            onClick={() => navigate(`/mis-clubes/${club._id}`)}
+                            className="inline-flex items-center gap-1 bg-[#2c3e50] hover:bg-[#1b2836] text-white text-[10px] font-bold uppercase px-3 py-2 rounded-xl transition tracking-wide cursor-pointer"
+                          >
+                            Ver Club
+                          </button>
+                        </div>
                       </div>
-                      
-                      <button
-                        onClick={() => navigate(`/mis-clubes/${club._id}`)}
-                        className="inline-flex items-center gap-1 bg-[#2c3e50] hover:bg-[#1b2836] text-white text-xs font-bold uppercase px-3 py-1.5 rounded-lg transition tracking-wide cursor-pointer shadow-3xs"
-                      >
-                        Ver Información
-                      </button>
+
+                      {/* SECCIÓN INTERNA: SOLICITUDES DE UNIÓN PENDIENTES */}
+                      <div className="bg-slate-50/50 rounded-2xl p-4 border border-gray-100">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FaClock className="text-amber-500" size={14} />
+                          <h4 className="text-xs font-black text-[#2c3e50] uppercase tracking-wider">
+                            Solicitudes Pendientes de Aprobación ({solicitudes.length})
+                          </h4>
+                        </div>
+
+                        {solicitudes.length > 0 ? (
+                          <div className="divide-y divide-gray-100 max-h-60 overflow-y-auto pr-1">
+                            {solicitudes.map((sol) => (
+                              <div key={sol._id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0 gap-4">
+                                <div className="min-w-0">
+                                  <p className="text-sm font-bold text-[#2c3e50] capitalize truncate">
+                                    {sol.usuario?.nombres} {sol.usuario?.apellidos}
+                                  </p>
+                                  <p className="text-[11px] text-gray-400 font-medium truncate">
+                                    @{sol.usuario?.username} • {sol.usuario?.email}
+                                  </p>
+                                </div>
+                                
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <button
+                                    disabled={loadingSolicitudes[sol._id]}
+                                    onClick={() => handleAprobar(sol._id, club._id)}
+                                    title="Aprobar Miembro"
+                                    className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl transition cursor-pointer disabled:opacity-50"
+                                  >
+                                    <FaCheckCircle size={14} />
+                                  </button>
+                                  <button
+                                    disabled={loadingSolicitudes[sol._id]}
+                                    onClick={() => handleRechazar(sol._id, club._id)}
+                                    title="Rechazar Solicitud"
+                                    className="p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl transition cursor-pointer disabled:opacity-50"
+                                  >
+                                    <FaTimesCircle size={14} />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wide py-2">
+                            No hay solicitudes pendientes en este momento.
+                          </p>
+                        )}
+                      </div>
+
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="bg-white rounded-2xl p-8 text-center border border-dashed border-gray-200">
@@ -161,7 +275,7 @@ export default function ModeratorDashboard() {
           </div>
         )}
 
-        {/* PESTAÑA 2: GESTIÓN DE USUARIOS */}
+        {/* PESTAÑA 2: GESTIÓN DE USUARIOS GENERALES */}
         {activeTab === "usuarios" && (
           <div className="bg-white rounded-2xl shadow-2xs border border-gray-100 overflow-hidden transition-opacity duration-200">
             <div className="overflow-x-auto">
@@ -182,22 +296,27 @@ export default function ModeratorDashboard() {
 
                       return (
                         <tr key={user._id} className="hover:bg-slate-50/50 transition">
-                          
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-slate-100 text-[#2c3e50] font-bold text-xs flex items-center justify-center border border-gray-200 select-none shrink-0">
-                                {inicial}
+                              <div className="w-8 h-8 rounded-lg bg-slate-100 text-[#2c3e50] font-bold text-xs flex items-center justify-center border border-gray-200 select-none shrink-0 overflow-hidden">
+                                {user.avatar ? (
+                                  <img 
+                                    src={user.avatar} 
+                                    alt={`${user.nombres} avatar`} 
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  inicial
+                                )}
                               </div>
                               <span className="text-sm font-bold text-[#2c3e50] capitalize">
                                 {user.nombres} {user.apellidos}
                               </span>
                             </div>
                           </td>
-
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">
                             {user.email}
                           </td>
-
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
                               esSuspendido 
@@ -207,10 +326,8 @@ export default function ModeratorDashboard() {
                               {user.estadoUsuario ?? "Activo"}
                             </span>
                           </td>
-
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <div className="flex justify-center items-center gap-2">
-                              
                               {!esSuspendido ? (
                                 user._id !== usuarioLogueado?._id && (
                                   <button
@@ -230,7 +347,6 @@ export default function ModeratorDashboard() {
                                   <FaCheckCircle size={14} />
                                 </button>
                               )}
-
                               <button
                                 onClick={() => navigate(`/detalle/usuario/${user._id}`)}
                                 title="Ver detalles completos"
@@ -238,7 +354,6 @@ export default function ModeratorDashboard() {
                               >
                                 <FaEye size={14} />
                               </button>
-
                             </div>
                           </td>
                         </tr>
