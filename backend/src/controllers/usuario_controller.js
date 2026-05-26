@@ -287,7 +287,10 @@ const registrarModerador = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Moderador registrado correctamente."
+      message: "Moderador registrado correctamente.",
+      data: {
+        moderador: nuevoModerador
+      }
     })
 
   } catch (error) {
@@ -316,7 +319,9 @@ const listarModeradores = async (req, res) => {
     .populate("creadoPor", "nombres")
 
     res.status(200).json({
-      moderadores
+      success: true,
+      message: "Moderadores obtenidos correctamente",
+      data: { moderadores }
     })
 
   } catch (error) {

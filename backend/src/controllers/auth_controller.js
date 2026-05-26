@@ -181,7 +181,7 @@ const login = async (req, res) => {
       })
     }
 
-    const { nombres, apellidos, provincia, username, _id, rol, email } = usuarioBDD
+    const { nombres, apellidos, provincia, username, _id, rol, email, avatar } = usuarioBDD
     const token = crearTokenJWT(usuarioBDD._id, usuarioBDD.rol)
 
     return res.status(200).json({
@@ -194,7 +194,8 @@ const login = async (req, res) => {
         provincia,
         username,
         email,
-        rol
+        rol,
+        avatar
       }
     })
 

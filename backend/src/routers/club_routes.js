@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { crearClub, listarClubes, detalleClub, asignarModeradorClub, misClubesAsignados, detalleMiClub } from "../controllers/club_controller.js"
+import { crearClub, listarClubes, detalleClub, asignarModeradorClub, misClubesAsignados, detalleMiClub, actualizarClub, suspenderClub, reactivarClub, quitarModeradorClub } from "../controllers/club_controller.js"
 import {verificarTokenJWT} from "../middlewares/JWT.js"
 
 const router = Router()
@@ -16,6 +16,13 @@ router.patch("/asignar-moderador/:clubId/:moderadorId",verificarTokenJWT,asignar
 router.get("/mis-clubes",verificarTokenJWT,misClubesAsignados)
 //Detalle de un club literario asignado a un moderador (solo lo ve el moderador)
 router.get("/mis-clubes/:clubId",verificarTokenJWT,detalleMiClub)
-
+//Actualizar un club literario 
+router.patch("/actualizar-club/:clubId",verificarTokenJWT,actualizarClub)
+//Suspender un club literario (solo lo hace el administrador)
+router.patch("/suspender-club/:clubId",verificarTokenJWT,suspenderClub)
+//Reactivar un club literario suspendido (solo lo hace el administrador)
+router.patch("/reactivar-club/:clubId",verificarTokenJWT,reactivarClub)
+//Quitar un moderador de un club literario
+router.patch("/quitar-moderador/:clubId/:moderadorId",verificarTokenJWT,quitarModeradorClub)
 
 export default router

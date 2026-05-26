@@ -25,7 +25,8 @@ const clubSchema = new mongoose.Schema({
       "Misterio",
       "Drama",
       "Aventura",
-      "Poesia"
+      "Poesia",
+      "Fanfic"
     ]
   },
 

@@ -1,6 +1,7 @@
 import Club from "../models/Clubes.js"
 import mongoose from "mongoose";
 import Usuarios from "../models/Usuarios.js"
+import { subirImagenCloudinary, eliminarImagenCloudinary} from "../helpers/uploadCloudinary.js";
 
 //Crear clubes literarios (solo lo hace el administrador)
 const crearClub = async (req, res) => {
@@ -46,7 +47,8 @@ const crearClub = async (req, res) => {
 
       const { secure_url, public_id } =
         await subirImagenCloudinary(
-          req.files.portada.tempFilePath
+          req.files.portada.tempFilePath,
+          "Clubes"
         )
 
       nuevoClub.portada = secure_url
@@ -193,6 +195,13 @@ const asignarModeradorClub = async (req, res) => {
     if (!club) {
       return res.status(404).json({
         msg: "Club no encontrado."
+      })
+    }
+
+    // VALIDAR ESTADO DEL CLUB
+    if (club.estadoClub !== "Activo") {
+      return res.status(403).json({
+        msg: "No se pueden asignar moderadores a clubes suspendidos."
       })
     }
 
@@ -359,11 +368,263 @@ const detalleMiClub = async (req, res) => {
   }
 }
 
+// ACTUALIZAR CLUB
+const actualizarClub = async (req, res) => {
+
+  try {
+
+    const { clubId } = req.params
+
+    const {
+      nombre,
+      descripcion
+    } = req.body
+
+    // VALIDAR ID
+    if (!mongoose.Types.ObjectId.isValid(clubId)) {
+
+      return res.status(400).json({
+        msg: "ID inválido."
+      })
+    }
+
+    // BUSCAR CLUB
+    const club = await Club.findById(clubId)
+
+    if (!club) {
+
+      return res.status(404).json({
+        msg: "Club no encontrado."
+      })
+    }
+
+    // ACTUALIZAR CAMPOS
+    if (nombre) {
+      club.nombre = nombre
+    }
+
+    if (descripcion) {
+      club.descripcion = descripcion
+    }
+
+    // ACTUALIZAR PORTADA
+    if (req.files?.portada) {
+
+      // ELIMINAR ANTERIOR
+      if (club.portadaID) {
+
+        await eliminarImagenCloudinary(
+          club.portadaID
+        )
+      }
+
+      // SUBIR NUEVA
+      const {
+        secure_url,
+        public_id
+      } = await subirImagenCloudinary(
+        req.files.portada.tempFilePath,
+        "Clubes"
+      )
+
+      club.portada = secure_url
+      club.portadaID = public_id
+    }
+
+    await club.save()
+
+    res.status(200).json({
+      ok: true,
+      msg: "Club actualizado correctamente.",
+      club
+    })
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      ok: false,
+      msg: `Error en el servidor - ${error}`
+    })
+  }
+}
+
+// SUSPENDER CLUB
+const suspenderClub = async (req, res) => {
+
+  try {
+
+    const { clubId } = req.params
+
+    // VALIDAR ID
+    if (!mongoose.Types.ObjectId.isValid(clubId)) {
+
+      return res.status(400).json({
+        msg: "ID inválido."
+      })
+    }
+
+    const club = await Club.findById(clubId)
+
+    if (!club) {
+
+      return res.status(404).json({
+        msg: "Club no encontrado."
+      })
+    }
+
+    if (club.estadoClub === "Suspendido") {
+
+      return res.status(400).json({
+        msg: "El club ya está suspendido."
+      })
+    }
+
+    club.estadoClub = "Suspendido"
+
+    await club.save()
+
+    res.status(200).json({
+      ok: true,
+      msg: "Club suspendido correctamente."
+    })
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      ok: false,
+      msg: `Error en el servidor - ${error}`
+    })
+  }
+}
+
+// REACTIVAR CLUB
+const reactivarClub = async (req, res) => {
+
+  try {
+
+    const { clubId } = req.params
+
+    // VALIDAR ID
+    if (!mongoose.Types.ObjectId.isValid(clubId)) {
+
+      return res.status(400).json({
+        msg: "ID inválido."
+      })
+    }
+
+    const club = await Club.findById(clubId)
+
+    if (!club) {
+
+      return res.status(404).json({
+        msg: "Club no encontrado."
+      })
+    }
+
+    club.estadoClub = "Activo"
+
+    await club.save()
+
+    res.status(200).json({
+      ok: true,
+      msg: "Club reactivado correctamente."
+    })
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      ok: false,
+      msg: `Error en el servidor - ${error}`
+    })
+  }
+}
+
+// QUITAR MODERADOR DEL CLUB
+const quitarModeradorClub = async (
+  req,
+  res
+) => {
+
+  try {
+
+    const {
+      clubId,
+      moderadorId
+    } = req.params
+
+    // VALIDAR IDS
+    if (
+      !mongoose.Types.ObjectId.isValid(clubId) ||
+      !mongoose.Types.ObjectId.isValid(moderadorId)
+    ) {
+
+      return res.status(400).json({
+        msg: "IDs inválidos."
+      })
+    }
+
+    // BUSCAR CLUB
+    const club = await Club.findById(clubId)
+
+    if (!club) {
+
+      return res.status(404).json({
+        msg: "Club no encontrado."
+      })
+    }
+
+    // VALIDAR SI EXISTE
+    const existeModerador =
+      club.moderadores.includes(moderadorId)
+
+    if (!existeModerador) {
+
+      return res.status(400).json({
+        msg: "El moderador no pertenece al club."
+      })
+    }
+
+    // ELIMINAR MODERADOR
+    club.moderadores =
+      club.moderadores.filter(
+        (id) => id.toString() !== moderadorId
+      )
+
+    await club.save()
+
+    res.status(200).json({
+      ok: true,
+      msg:
+        "Moderador removido del club correctamente."
+    })
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      ok: false,
+      msg:
+        `Error en el servidor - ${error}`
+    })
+  }
+}
+
 export {
   crearClub,
   listarClubes,
   detalleClub,
   asignarModeradorClub,
   misClubesAsignados,
-  detalleMiClub
+  detalleMiClub,
+  actualizarClub,
+  suspenderClub,
+  reactivarClub,
+  quitarModeradorClub
 }
