@@ -9,6 +9,8 @@ import authRouter from './routers/auth_routes.js'
 import routerUsuarios from './routers/usuario_routes.js'
 import routerClubes from './routers/club_routes.js'
 import routerClubMiembros from './routers/clubMiembros_routes.js'
+import routerObras from './routers/obras_routes.js'
+import routerCapitulos from './routers/capitulos_routes.js'
 
 // Inicializaciones
 const app = express()
@@ -47,6 +49,12 @@ app.use('/api/clubes', routerClubes)
 
 // Rutas para miembros de clubes
 app.use('/api/club-miembros', routerClubMiembros)
+
+// Rutas para obras literarias
+app.use('/api/obras', routerObras)
+
+// Rutas para capítulos de obras
+app.use('/api/capitulos', routerCapitulos)
 
 // Manejo de una ruta que no sea encontrada
 app.use((req,res) => res.status(404).send("Error 404: Endpoint no encontrado."))

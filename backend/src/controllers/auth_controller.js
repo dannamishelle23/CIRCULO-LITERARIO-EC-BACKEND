@@ -7,6 +7,9 @@ import mongoose from "mongoose"
 const registro = async (req, res) => {
   try {
     const { email, username, password } = req.body
+    console.log("BODY:", req.body)
+    console.log("EMAIL:", email)
+    console.log("USERNAME:", username)
 
     //Verificar usuario existente
     const usuarioExistente = await Usuarios.findOne({
