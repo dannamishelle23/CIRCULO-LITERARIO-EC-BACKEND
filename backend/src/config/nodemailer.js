@@ -9,7 +9,12 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: process.env.BREVO_USER,
     pass: process.env.BREVO_PASS
-  }
+  },
+  tls: {
+    rejectUnauthorized: false
+  },
+  logger: true,
+  debug: true
 })
 
 const sendMail = async (to, subject, html) => {
