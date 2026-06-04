@@ -47,6 +47,7 @@ const ObraSchema = new Schema(
         "EnRevision",
         "Aprobada",
         "EnVotacion",
+        "Ganadora",
         "Publicada",
         "Rechazada",
       ],
@@ -77,6 +78,36 @@ const ObraSchema = new Schema(
       type: Boolean,
       default: true,
     },
+
+    fechaPostulacion: {
+      type: Date,
+      default: null
+    },
+
+    fechaAprobacion: {
+      type: Date,
+      default: null
+    },
+
+    fechaInicioVotacion: {
+      type: Date,
+      default: null
+    },
+
+    fechaFinVotacion: {
+      type: Date,
+      default: null
+    },
+
+    fechaPublicacion: {
+      type: Date,
+      default: null
+    },
+
+    motivoRechazo: {
+      type: String,
+      default: null
+    }
   },
   {
     timestamps: true,

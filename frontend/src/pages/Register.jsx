@@ -35,7 +35,6 @@ const Register = () => {
 
   const registerUser = async (dataForm) => {
     const url = `${API_BASE_URL}/auth/registro`
-
     const response = await fetchDataBackend(url, dataForm, "POST")
 
     if (response) {

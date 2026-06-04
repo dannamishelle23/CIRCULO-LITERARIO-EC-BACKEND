@@ -1,32 +1,41 @@
 import Obra from "../models/Obras.js";
 import Capitulo from "../models/Capitulos.js";
+import Club from "../models/Clubes.js";
 import { subirImagenCloudinary } from "../helpers/uploadCloudinary.js";
 
+// =========================
+// CREAR OBRA
+// =========================
 export const crearObra = async (req, res) => {
   try {
-    console.log("BODY:", req.body);
-    console.log("FILES:", req.files);
 
     const { titulo, sinopsis, prologo, club } = req.body;
 
     if (!titulo || !sinopsis || !prologo || !club) {
       return res.status(400).json({
-        msg: "Faltan campos obligatorios",
-        body: req.body,
+        msg: "Todos los campos son obligatorios."
+      });
+    }
+
+    const clubExiste = await Club.findById(club);
+
+    if (!clubExiste) {
+      return res.status(404).json({
+        msg: "Club no encontrado."
       });
     }
 
     if (!req.files?.portada) {
       return res.status(400).json({
-        msg: "La portada es obligatoria",
+        msg: "La portada es obligatoria."
       });
     }
 
-    // SUBIR IMAGEN A CLOUDINARY
-    const { secure_url, public_id } = await subirImagenCloudinary(
-      req.files.portada.tempFilePath,
-      "obras"
-    );
+    const { secure_url, public_id } =
+      await subirImagenCloudinary(
+        req.files.portada.tempFilePath,
+        "obras"
+      );
 
     const obra = new Obra({
       titulo,
@@ -35,43 +44,53 @@ export const crearObra = async (req, res) => {
       portada: secure_url,
       portadaID: public_id,
       autor: req.usuarioHeader._id,
-      club,
-      estado: "Borrador",
+      club
     });
 
     await obra.save();
 
     res.status(201).json({
       ok: true,
-      msg: "Obra creada correctamente",
-      obra,
+      msg: "Obra creada correctamente.",
+      obra
     });
+
   } catch (error) {
-    console.log("ERROR:", error);
+
+    console.error(error);
 
     res.status(500).json({
-      msg: "Error al crear obra",
-      error: error.message,
+      ok: false,
+      msg: "Error al crear obra."
     });
   }
 };
 
 // =========================
-// OBTENER OBRA (VISIBILIDAD CONTROLADA)
+// OBTENER OBRA
 // =========================
 export const obtenerObra = async (req, res) => {
   try {
+
     const { id } = req.params;
 
     const obra = await Obra.findById(id)
-      .populate("autor", "nombre")
-      .populate("club", "nombre");
+      .populate(
+        "autor",
+        "nombres apellidos username avatar"
+      )
+      .populate(
+        "club",
+        "nombre generoLiterario"
+      );
 
     if (!obra) {
-      return res.status(404).json({ msg: "Obra no encontrada" });
+      return res.status(404).json({
+        msg: "Obra no encontrada."
+      });
     }
 
-    let response = {
+    const response = {
       _id: obra._id,
       titulo: obra.titulo,
       sinopsis: obra.sinopsis,
@@ -81,106 +100,213 @@ export const obtenerObra = async (req, res) => {
       autor: obra.autor,
       club: obra.club,
       votos: obra.votos.length,
+      fechaInicioVotacion: obra.fechaInicioVotacion,
+      fechaFinVotacion: obra.fechaFinVotacion
     };
 
-    // SOLO SI ES PUBLICADA → mostrar capítulos completos
-    if (obra.estado === "Publicada") {
-      const capitulos = await Capitulo.find({ obra: id });
+    if (
+      obra.estado === "Publicada"
+    ) {
+      const capitulos = await Capitulo.find({
+        obra: obra._id,
+        activo: true
+      }).sort({
+        numeroCapitulo: 1
+      });
+
       response.capitulos = capitulos;
     }
 
-    res.json({ ok: true, obra: response });
+    res.status(200).json({
+      ok: true,
+      obra: response
+    });
+
   } catch (error) {
-    res.status(500).json({ msg: "Error al obtener obra", error });
+
+    console.error(error);
+
+    res.status(500).json({
+      msg: "Error al obtener obra."
+    });
   }
 };
 
 // =========================
-// LISTAR OBRAS POR CLUB
+// LISTAR OBRAS DE UN CLUB
 // =========================
 export const listarObrasClub = async (req, res) => {
   try {
+
     const { clubId } = req.params;
 
-    const obras = await Obra.find({ club: clubId, activo: true });
+    const obras = await Obra.find({
+      club: clubId,
+      activo: true,
+      estado: {
+        $in: [
+          "Aprobada",
+          "EnVotacion",
+          "Publicada"
+        ]
+      }
+    })
+      .populate(
+        "autor",
+        "nombres apellidos username avatar"
+      )
+      .sort({
+        createdAt: -1
+      });
 
-    res.json({ ok: true, obras });
+    res.status(200).json({
+      ok: true,
+      obras
+    });
+
   } catch (error) {
-    res.status(500).json({ msg: "Error al listar obras", error });
+
+    console.error(error);
+
+    res.status(500).json({
+      msg: "Error al listar obras."
+    });
   }
 };
 
 // =========================
-// ACTUALIZAR OBRA (SOLO AUTOR)
+// ACTUALIZAR OBRA
 // =========================
 export const actualizarObra = async (req, res) => {
   try {
+
     const { id } = req.params;
 
     const obra = await Obra.findById(id);
 
     if (!obra) {
-      return res.status(404).json({ msg: "Obra no encontrada" });
+      return res.status(404).json({
+        msg: "Obra no encontrada."
+      });
     }
 
-    if (obra.autor.toString() !== req.usuarioHeader._id.toString()) {
-      return res.status(403).json({ msg: "No eres el autor" });
+    if (
+      obra.autor.toString() !==
+      req.usuarioHeader._id.toString()
+    ) {
+      return res.status(403).json({
+        msg: "No eres el autor."
+      });
     }
 
-    // ❌ evitar cambios peligrosos
+    if (
+      ["EnVotacion", "Publicada"]
+      .includes(obra.estado)
+    ) {
+      return res.status(400).json({
+        msg:
+          "No puedes editar una obra en votación o publicada."
+      });
+    }
+
     const cambios = req.body;
+
     delete cambios.estado;
     delete cambios.autor;
     delete cambios.votos;
     delete cambios.club;
 
-    const obraActualizada = await Obra.findByIdAndUpdate(id, cambios, {
-      new: true,
+    const obraActualizada =
+      await Obra.findByIdAndUpdate(
+        id,
+        cambios,
+        {
+          new: true
+        }
+      );
+
+    res.status(200).json({
+      ok: true,
+      msg: "Obra actualizada.",
+      obra: obraActualizada
     });
 
-    res.json({ ok: true, obra: obraActualizada });
   } catch (error) {
-    res.status(500).json({ msg: "Error al actualizar obra", error });
+
+    console.error(error);
+
+    res.status(500).json({
+      msg: "Error al actualizar obra."
+    });
   }
 };
 
 // =========================
-// POSTULAR A REVISIÓN
+// POSTULAR OBRA
 // =========================
 export const postularObra = async (req, res) => {
   try {
+
     const { id } = req.params;
 
     const obra = await Obra.findById(id);
 
     if (!obra) {
-      return res.status(404).json({ msg: "Obra no encontrada" });
-    }
-
-    if (obra.autor.toString() !== req.usuario._id.toString()) {
-      return res.status(403).json({ msg: "No eres el autor" });
-    }
-
-    const capitulos = await Capitulo.countDocuments({ obra: id });
-
-    if (capitulos < 3) {
-      return res.status(400).json({
-        msg: "Debes tener mínimo 3 capítulos",
+      return res.status(404).json({
+        msg: "Obra no encontrada."
       });
     }
 
-    if (obra.estado !== "Borrador") {
+    if (obra.autor.toString() !==
+      req.usuarioHeader._id.toString()
+    ) {
+      return res.status(403).json({
+        msg: "No eres el autor."
+      });
+    }
+
+    const totalCapitulos =
+      await Capitulo.countDocuments({
+        obra: id,
+        activo: true
+      });
+
+    if (totalCapitulos < 3) {
       return res.status(400).json({
-        msg: "La obra ya fue postulada o está en proceso",
+        msg:
+          "La obra debe tener mínimo 3 capítulos."
+      });
+    }
+
+    if (
+      !["Borrador", "Rechazada"]
+      .includes(obra.estado)
+    ) {
+      return res.status(400).json({
+        msg:
+          "La obra no puede volver a postularse."
       });
     }
 
     obra.estado = "EnRevision";
+    obra.fechaPostulacion = new Date();
+    obra.motivoRechazo = null;
+
     await obra.save();
 
-    res.json({ ok: true, msg: "Enviada a revisión", obra });
+    res.status(200).json({
+      ok: true,
+      msg: "Obra enviada a revisión.",
+      obra
+    });
+
   } catch (error) {
-    res.status(500).json({ msg: "Error al postular obra", error });
+
+    console.error(error);
+
+    res.status(500).json({
+      msg: "Error al postular obra."
+    });
   }
 };
 
@@ -189,26 +315,45 @@ export const postularObra = async (req, res) => {
 // =========================
 export const aprobarObra = async (req, res) => {
   try {
+
     const { id } = req.params;
 
     const obra = await Obra.findById(id);
 
     if (!obra) {
-      return res.status(404).json({ msg: "Obra no encontrada" });
+      return res.status(404).json({
+        msg: "Obra no encontrada."
+      });
     }
 
-    if (obra.estado !== "EnRevision") {
+    if (
+      obra.estado !== "EnRevision"
+    ) {
       return res.status(400).json({
-        msg: "Solo obras en revisión pueden ser aprobadas",
+        msg:
+          "Solo las obras en revisión pueden aprobarse."
       });
     }
 
     obra.estado = "Aprobada";
+    obra.fechaAprobacion =
+      new Date();
+
     await obra.save();
 
-    res.json({ ok: true, msg: "Obra aprobada", obra });
+    res.status(200).json({
+      ok: true,
+      msg: "Obra aprobada.",
+      obra
+    });
+
   } catch (error) {
-    res.status(500).json({ msg: "Error al aprobar obra", error });
+
+    console.error(error);
+
+    res.status(500).json({
+      msg: "Error al aprobar obra."
+    });
   }
 };
 
@@ -217,29 +362,55 @@ export const aprobarObra = async (req, res) => {
 // =========================
 export const iniciarVotacion = async (req, res) => {
   try {
+
     const { id } = req.params;
 
     const obra = await Obra.findById(id);
 
     if (!obra) {
-      return res.status(404).json({ msg: "Obra no encontrada" });
-    }
-
-    if (obra.estado !== "Aprobada") {
-      return res.status(400).json({
-        msg: "La obra debe estar aprobada primero",
+      return res.status(404).json({
+        msg: "Obra no encontrada."
       });
     }
 
+    if (
+      obra.estado !== "Aprobada"
+    ) {
+      return res.status(400).json({
+        msg:
+          "La obra debe estar aprobada."
+      });
+    }
+
+    const hoy = new Date();
+
+    const fechaFin =
+      new Date(hoy);
+
+    fechaFin.setDate(
+      fechaFin.getDate() + 7
+    );
+
     obra.estado = "EnVotacion";
+    obra.fechaInicioVotacion = hoy;
+    obra.fechaFinVotacion = fechaFin;
+
     await obra.save();
 
-    res.json({
+    res.status(200).json({
       ok: true,
-      msg: "Votación iniciada (7 días)",
-      obra,
+      msg:
+        "La votación estará activa durante 7 días.",
+      obra
     });
+
   } catch (error) {
-    res.status(500).json({ msg: "Error al iniciar votación", error });
+
+    console.error(error);
+
+    res.status(500).json({
+      msg:
+        "Error al iniciar la votación."
+    });
   }
 };

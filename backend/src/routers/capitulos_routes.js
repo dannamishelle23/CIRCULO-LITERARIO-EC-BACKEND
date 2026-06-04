@@ -3,44 +3,46 @@ import { Router } from "express";
 import {
   crearCapitulo,
   listarCapitulos,
+  detalleCapitulo,
   editarCapitulo,
-  eliminarCapitulo,
+  eliminarCapitulo
 } from "../controllers/capitulos_controller.js";
 
-import { verificarTokenJWT } from "../middlewares/JWT.js";
+import {
+  verificarTokenJWT
+} from "../middlewares/JWT.js";
 
 const router = Router();
 
-/* =========================
-   CREAR CAPÍTULO
-========================= */
+// Crear capítulo
 router.post(
-  "/:id", // id = obraId
+  "/:id",
   verificarTokenJWT,
   crearCapitulo
 );
 
-/* =========================
-   LISTAR CAPÍTULOS
-========================= */
+// Listar capítulos de una obra
 router.get(
   "/obra/:id",
   verificarTokenJWT,
   listarCapitulos
 );
 
-/* =========================
-   EDITAR CAPÍTULO
-========================= */
+// Ver un capítulo específico
+router.get(
+  "/detalle/:capituloId",
+  verificarTokenJWT,
+  detalleCapitulo
+);
+
+// Editar capítulo
 router.put(
   "/:capituloId",
   verificarTokenJWT,
   editarCapitulo
 );
 
-/* =========================
-   ELIMINAR CAPÍTULO
-========================= */
+// Eliminar capítulo
 router.delete(
   "/:capituloId",
   verificarTokenJWT,

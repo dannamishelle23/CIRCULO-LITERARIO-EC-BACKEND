@@ -40,7 +40,7 @@ router.get(
 router.get("/:id",verificarTokenJWT,obtenerObra);
 
 /* =========================
-   ACTUALIZAR OBRA (solo autor real)
+   ACTUALIZAR OBRA
 ========================= */
 router.put(
   "/:id",
@@ -50,7 +50,7 @@ router.put(
 );
 
 /* =========================
-   POSTULAR OBRA (solo autor real)
+   POSTULAR OBRA
 ========================= */
 router.post(
   "/:id/postular",
