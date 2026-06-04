@@ -68,18 +68,19 @@ export function useFetch() {
         error?.response?.data?.message ||
         "Ocurrió un error"
 
-      // Mostrar primer error de validación
+      // Mostrar todos los errores de validación
       if (validationErrors) {
 
-        const firstField =
-          Object.keys(validationErrors)[0]
+        const errorList = []
 
-        if (
-          firstField &&
-          validationErrors[firstField]?.length > 0
-        ) {
-          errorMessage =
-            validationErrors[firstField][0]
+        Object.entries(validationErrors).forEach(([field, messages]) => {
+          if (messages && messages.length > 0) {
+            errorList.push(`${field}: ${messages[0]}`)
+          }
+        })
+
+        if (errorList.length > 0) {
+          errorMessage = errorList.join("\n")
         }
       }
 
