@@ -158,10 +158,10 @@ export default function ClubUsuarioDetail() {
               </div>
               <button 
                 type="button"
-                disabled 
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-gray-100 border border-gray-200 px-5 py-3 text-xs font-black uppercase tracking-wider text-gray-400 cursor-not-allowed transition"
+                onClick={() => navigate(`/crear-obra/${id}`)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#e67e22] border border-[#e67e22] px-5 py-3 text-xs font-black uppercase tracking-wider text-white hover:bg-orange-600 transition"
               >
-                <FaCloudUploadAlt size={16} /> Subir obra (Próximamente)
+                <FaCloudUploadAlt size={16} /> Crear Obra
               </button>
             </div>
 

@@ -44,13 +44,20 @@ export const assignModerator = async (
   return response.data;
 };
 
-/* VISUALIZAR MIS CLUBES ASIGNADOS */
+/* VISUALIZAR MIS CLUBES ASIGNADOS (para moderadores) */
 export const getMyAssignedClubs = async () => {
-
-  const response = await api.get(
-    "/clubes/mis-clubes"
-  );
-  return response.data.clubes;
+  try {
+    const response = await api.get(
+      "/clubes/mis-clubes"
+    );
+    return response.data.clubes;
+  } catch (error) {
+    // Si falla (no es moderador), intentar obtener todos los clubes
+    if (error.response?.status === 403) {
+      return await getClubs();
+    }
+    throw error;
+  }
 };
 
 /* DETALLE DE MI CLUB ASIGNADO POR ID */

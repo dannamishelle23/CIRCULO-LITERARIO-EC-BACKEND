@@ -49,6 +49,9 @@ import Menu from "./pages/Menu"
 import ObrasMenu from "./pages/ObrasMenu"
 import CrearObra from "./pages/CrearObra"
 import MisObras from "./pages/MisObras"
+import ObraDetalle from "./pages/ObraDetalle"
+import ObraModeracion from "./pages/moderator/ObraModeracion"
+import ModerationPanel from "./pages/moderator/ModerationPanel"
 
 import PrivateRoute from "./components/PrivateRoute"
 import AdminRoute from "./components/AdminRoute"
@@ -128,13 +131,18 @@ function App() {
             <Route path="/obras" element={<ObrasMenu />} />
 
             <Route
-              path="/crear-obra"
+              path="/crear-obra/:clubId"
               element={<CrearObra />}
             />
 
             <Route
               path="/mis-obras"
               element={<MisObras />}
+            />
+
+            <Route
+              path="/obra/:id"
+              element={<ObraDetalle />}
             />
 
             <Route path="/perfil" element={<Profile />} />
@@ -211,6 +219,17 @@ function App() {
             <Route
               path="/moderator"
               element={<ModeratorDashboard />}
+            />
+
+            {/* PANEL DE MODERACIÓN - OBRAS */}
+            <Route
+              path="/admin/moderacion"
+              element={<ModerationPanel />}
+            />
+
+            <Route
+              path="/moderacion/:id"
+              element={<ObraModeracion />}
             />
 
             {/* DETALLES */}

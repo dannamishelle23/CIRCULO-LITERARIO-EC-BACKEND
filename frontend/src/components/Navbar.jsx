@@ -1,8 +1,6 @@
-import { Link } from "react-router-dom";
-
 export default function Navbar() {
   return (
-    <nav className="bg-white shadow-md px-8 py-4 flex items-center justify-between">
+    <nav className="bg-white shadow-md px-8 py-4 flex items-center justify-between sticky top-0 z-30">
       
       {/* IZQUIERDA - LOGO */}
       <div className="text-xl font-bold flex items-center gap-1">
@@ -12,21 +10,21 @@ export default function Navbar() {
 
       {/* CENTRO - MENÚ */}
       <div className="flex gap-8 text-gray-700 font-medium">
-        <Link to="/home" className="hover:text-orange-500 transition">
+        <a href="/home#inicio" className="hover:text-orange-500 transition">
           Inicio
-        </Link>
+        </a>
 
-        <Link to="/comunidad" className="hover:text-orange-500 transition">
+        <a href="/home#comunidad" className="hover:text-orange-500 transition">
           Comunidad
-        </Link>
+        </a>
 
-        <Link to="/beneficios" className="hover:text-orange-500 transition">
+        <a href="/home#beneficios" className="hover:text-orange-500 transition">
           Beneficios
-        </Link>
+        </a>
 
-        <Link to="/contacto" className="hover:text-orange-500 transition">
+        <a href="/home#contacto" className="hover:text-orange-500 transition">
           Contacto
-        </Link>
+        </a>
       </div>
 
       {/* DERECHA (opcional, vacío o futuro login/user) */}

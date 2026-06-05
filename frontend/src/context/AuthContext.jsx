@@ -1,4 +1,4 @@
-import { createContext, useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 
 export const AuthContext = createContext();
 
@@ -20,4 +20,13 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+// Hook personalizado para usar el contexto
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth debe ser usado dentro de AuthProvider');
+  }
+  return context;
 };
