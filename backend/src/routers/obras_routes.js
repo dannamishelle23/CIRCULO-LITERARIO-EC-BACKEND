@@ -3,9 +3,12 @@ import {
   crearObra,
   obtenerObra,
   listarObrasClub,
+  listarObrasEnRevision,
+  listarObrasAprobadas,
   actualizarObra,
   postularObra,
   aprobarObra,
+  rechazarObra,
   iniciarVotacion,
   listarMisObrasClub
 } from "../controllers/obras_controller.js";
@@ -33,6 +36,26 @@ router.get(
   verificarTokenJWT,
   verificarMiembroClub,
   listarObrasClub
+);
+
+/* =========================
+   LISTAR OBRAS EN REVISIÓN DEL CLUB (moderadores)
+========================= */
+router.get(
+  "/moderador/:clubId/en-revision",
+  verificarTokenJWT,
+  verificarRol("Moderador"),
+  listarObrasEnRevision
+);
+
+/* =========================
+   LISTAR OBRAS APROBADAS DEL CLUB (moderadores)
+========================= */
+router.get(
+  "/moderador/:clubId/aprobadas",
+  verificarTokenJWT,
+  verificarRol("Moderador"),
+  listarObrasAprobadas
 );
 
 /* =========================
@@ -68,6 +91,16 @@ router.post(
   verificarTokenJWT,
   verificarRol("Moderador"),
   aprobarObra
+);
+
+/* =========================
+   RECHAZAR OBRA (moderador)
+========================= */
+router.post(
+  "/:id/rechazar",
+  verificarTokenJWT,
+  verificarRol("Moderador"),
+  rechazarObra
 );
 
 router.get(

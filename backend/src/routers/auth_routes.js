@@ -1,5 +1,5 @@
 import {Router} from 'express'
-import { registro, confirmarMail, recuperarPassword, comprobarTokenPassword, crearNuevoPassword, login } from '../controllers/auth_controller.js'
+import { registro, confirmarMail, reenviarConfirmacion, recuperarPassword, comprobarTokenPassword, crearNuevoPassword, login } from '../controllers/auth_controller.js'
 import {
   validarRegistro,
   validarLogin,
@@ -16,6 +16,8 @@ const router = Router()
 router.post('/registro', validarRegistro, validarCampos, registro)
 //2. Ruta para la confirmación del email del lector y/o autor
 router.get('/confirmar/:token', validarToken, validarCampos,confirmarMail)
+//2.1 Ruta para reenviar correo de confirmación
+router.post('/reenviar-confirmacion', validarCampos, reenviarConfirmacion)
 //3. Rutas para la recuperación de contraseña (Administrador - Moderador - Lector y/o Autor)
 router.post('/recuperar-password', validarRecuperarPassword, validarCampos, recuperarPassword)
 router.get('/recuperar-password/:token', validarToken, validarCampos, comprobarTokenPassword)

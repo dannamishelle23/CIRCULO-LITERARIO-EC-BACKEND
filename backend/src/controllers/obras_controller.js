@@ -200,6 +200,62 @@ export const listarObrasClub = async (req, res) => {
 };
 
 // =========================
+// LISTAR OBRAS EN REVISIÓN DE UN CLUB (para moderadores)
+// =========================
+export const listarObrasEnRevision = async (req, res) => {
+  try {
+    const { clubId } = req.params;
+
+    const obras = await Obra.find({
+      club: clubId,
+      activo: true,
+      estado: "EnRevision"
+    })
+      .populate("autor", "nombres apellidos username avatar email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      ok: true,
+      obras
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      msg: "Error al listar obras en revisión."
+    });
+  }
+};
+
+// =========================
+// LISTAR OBRAS APROBADAS DE UN CLUB (para poner a votación)
+// =========================
+export const listarObrasAprobadas = async (req, res) => {
+  try {
+    const { clubId } = req.params;
+
+    const obras = await Obra.find({
+      club: clubId,
+      activo: true,
+      estado: "Aprobada"
+    })
+      .populate("autor", "nombres apellidos username avatar email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      ok: true,
+      obras
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      msg: "Error al listar obras aprobadas."
+    });
+  }
+};
+
+// =========================
 // ACTUALIZAR OBRA
 // =========================
 export const actualizarObra = async (req, res) => {

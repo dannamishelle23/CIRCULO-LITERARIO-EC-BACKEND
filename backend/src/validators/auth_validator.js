@@ -161,6 +161,6 @@ export const validarToken = [
     check("token")
         .notEmpty()
         .withMessage("El token es obligatorio.")
-        .isLength({ min: 20 })
+        .isLength({ min: 8 })
         .withMessage("Token inválido.")
 ]

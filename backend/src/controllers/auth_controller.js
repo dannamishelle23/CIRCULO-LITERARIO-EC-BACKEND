@@ -59,14 +59,43 @@ const registro = async (req, res) => {
 const confirmarMail = async(req,res) => {
   try {
     const {token} = req.params
+
+    // Validar que el token no esté vacío
+    if (!token || token.trim() === "") {
+      return res.status(400).json({msg: "Token inválido o no proporcionado."})
+    }
+
+    // Buscar el usuario por el token
     const usuarioBDD = await Usuarios.findOne({token})
-    if (!usuarioBDD) return res.status(404).json({msg: "Token inválido o cuenta ya confirmada."})
+    
+    // Si no existe el usuario o el token no coincide
+    if (!usuarioBDD) {
+      return res.status(404).json({msg: "Token inválido o cuenta ya confirmada."})
+    }
+
+    // Verificar si la cuenta ya está confirmada
+    if (usuarioBDD.confirmEmail === true) {
+      return res.status(400).json({msg: "La cuenta ya ha sido confirmada anteriormente."})
+    }
+
+    // Actualizar el usuario: eliminar token y marcar como confirmado
     usuarioBDD.token = null
     usuarioBDD.confirmEmail = true
     await usuarioBDD.save()
-    res.status(200).json({msg: "Cuenta confirmada, ya puedes iniciar sesión."})
+
+    // Log para debugging
+    console.log(`✓ Cuenta confirmada para usuario: ${usuarioBDD.email}`)
+
+    res.status(200).json({
+      msg: "¡Cuenta confirmada exitosamente! Ya puedes iniciar sesión.",
+      usuario: {
+        email: usuarioBDD.email,
+        username: usuarioBDD.username,
+        confirmEmail: usuarioBDD.confirmEmail
+      }
+    })
   } catch (error) {
-    console.error(error)
+    console.error("Error en confirmarMail:", error)
     res.status(500).json({msg: "Error al procesar la solicitud"})
   }
 }
@@ -166,7 +195,7 @@ const login = async (req, res) => {
     }
     if (!usuarioBDD.confirmEmail) {
       return res.status(403).json({
-        msg: "Debes verificar tu cuenta antes de iniciar sesión."
+        msg: "Tu cuenta no ha sido verificada. Revisa tu correo electrónico para confirmar tu cuenta antes de iniciar sesión."
       })
     }
 
@@ -208,9 +237,51 @@ const login = async (req, res) => {
   }
 }
 
+//Reenviar correo de confirmación
+const reenviarConfirmacion = async(req,res) => {
+  try {
+    const {email} = req.body
+    
+    if (!email) {
+      return res.status(400).json({msg: "El correo electrónico es obligatorio."})
+    }
+
+    // Buscar el usuario por email
+    const usuario = await Usuarios.findOne({email})
+    
+    if (!usuario) {
+      return res.status(404).json({msg: "No encontramos una cuenta con este correo electrónico."})
+    }
+
+    // Verificar si ya está confirmado
+    if (usuario.confirmEmail === true) {
+      return res.status(400).json({msg: "Esta cuenta ya ha sido confirmada."})
+    }
+
+    // Generar nuevo token
+    const nuevoToken = usuario.createToken()
+    usuario.token = nuevoToken
+    await usuario.save()
+
+    // Reenviar el correo
+    try {
+      await sendMailToRegister(email, nuevoToken)
+      console.log(`✓ Correo de confirmación reenviado a: ${email}`)
+      res.status(200).json({msg: "Correo de confirmación reenviado. Revisa tu buzón."})
+    } catch (error) {
+      console.error("Error reenviando correo:", error.message)
+      res.status(500).json({msg: "Error al reenviar el correo. Intenta más tarde."})
+    }
+  } catch (error) {
+    console.error("Error en reenviarConfirmacion:", error)
+    res.status(500).json({msg: "Error al procesar la solicitud."})
+  }
+}
+
 export {
     registro,
     confirmarMail,
+    reenviarConfirmacion,
     recuperarPassword,
     comprobarTokenPassword,
     crearNuevoPassword,
