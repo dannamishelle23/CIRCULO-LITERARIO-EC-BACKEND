@@ -100,11 +100,7 @@ export default function MyClubs() {
                 </div>
 
                 <button
-                  onClick={() =>
-                    navigate(
-                      `/mis-clubes/${club._id}`
-                    )
-                  }
+                  onClick={() => navigate(`/mis-clubes/${club._id}`)}
                   className="w-full bg-blue-500 hover:bg-blue-400 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 transition"
                 >
 

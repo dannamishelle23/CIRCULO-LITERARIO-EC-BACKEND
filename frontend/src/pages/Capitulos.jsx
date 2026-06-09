@@ -8,7 +8,7 @@ import {
   deleteCapitulo
 } from "../services/capituloService";
 
-// ✔ IMPORT CORRECTO (tu carpeta real)
+// IMPORT CORRECTO (tu carpeta real)
 import CapituloForm from "../components/capitulos/CapituloForm";
 import CapituloCard from "../components/capitulos/CapituloCard";
 
@@ -35,7 +35,7 @@ export default function Capitulos() {
     loadCapitulos();
   }, [id]);
 
-  // ➕ CREAR / ✏️ EDITAR
+  // CREAR / EDITAR
   const handleSubmit = async (capitulo) => {
     try {
       if (editingCapitulo) {
@@ -51,7 +51,7 @@ export default function Capitulos() {
     }
   };
 
-  // ❌ ELIMINAR
+  // ELIMINAR
   const handleDelete = async (capituloId) => {
     try {
       await deleteCapitulo(capituloId);

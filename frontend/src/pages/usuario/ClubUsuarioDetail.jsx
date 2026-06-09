@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom" // Asegúrate de que apunte a 'react-router-dom' si fue un typo de tipeo
 import { getClubById, listarMiembrosClub } from "../../services/clubService"
 import { 
   FaArrowLeft, 
@@ -8,8 +8,12 @@ import {
   FaEye, 
   FaBookOpen, 
   FaImage, 
-  FaCloudUploadAlt 
+  FaCloudUploadAlt,
+  FaHourglassHalf,
+  FaPenNib
 } from "react-icons/fa"
+
+import { listarMisObrasClub } from "../../services/obraService"
 
 export default function ClubUsuarioDetail() {
   const { id } = useParams()
@@ -17,6 +21,7 @@ export default function ClubUsuarioDetail() {
 
   const [club, setClub] = useState(null)
   const [miembros, setMiembros] = useState([])
+  const [obras, setObras] = useState([]) // Estado unificado
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -24,12 +29,14 @@ export default function ClubUsuarioDetail() {
       try {
         setLoading(true)
 
-        const [clubRes, miembrosRes] = await Promise.all([
+        const [clubRes, miembrosRes, obrasRes] = await Promise.all([
           getClubById(id),
-          listarMiembrosClub(id)
+          listarMiembrosClub(id),
+          listarMisObrasClub(id)
         ])
 
         setClub(clubRes)
+        setObras(obrasRes?.obras || [])
         setMiembros(miembrosRes?.miembros || [])
 
       } catch (error) {
@@ -41,6 +48,30 @@ export default function ClubUsuarioDetail() {
 
     fetchData()
   }, [id])
+
+  // Helper estético para renderizar los estados de la obra del usuario
+  const renderBadgeEstadoObra = (estado) => {
+    switch (estado) {
+      case "Borrador":
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
+            <FaPenNib size={10} /> Borrador
+          </span>
+        )
+      case "EnRevision":
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100 animate-pulse">
+            <FaHourglassHalf size={10} /> En revisión
+          </span>
+        )
+      default:
+        return (
+          <span className="inline-flex items-center text-[10px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+            ✓ {estado}
+          </span>
+        )
+    }
+  }
 
   if (loading) {
     return (
@@ -70,13 +101,13 @@ export default function ClubUsuarioDetail() {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#2c3e50] hover:bg-gray-50 transition shadow-3xs cursor-pointer active:scale-98"
+            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#2c3e50] hover:text-[#e67e22] hover:border-orange-200 transition shadow-3xs cursor-pointer active:scale-98 group"
           >
-            <FaArrowLeft size={12} /> Volver a mis Clubes
+            <FaArrowLeft size={11} className="transition-transform duration-200 group-hover:-translate-x-0.5" /> Volver a mis Clubes
           </button>
         </div>
 
-        {/* --- CONTENEDOR DE PORTADA Y ÁREA DE IDENTIDAD --- */}
+        {/* CONTENEDOR DE PORTADA Y ÁREA DE IDENTIDAD */}
         <div className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm">
           
           {/* SECCIÓN DE IMAGEN PANORÁMICA GRANDE */}
@@ -91,7 +122,7 @@ export default function ClubUsuarioDetail() {
                 <img 
                   src={club.portada} 
                   alt={`Portada de ${club.nombre}`} 
-                  className="absolute inset-0 w-full h-full object-contain md:object-cover z-10 transition duration-500 hover:scale-[1.01]"
+                  className="absolute inset-0 w-full h-full object-contain md:object-cover z-10"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-20 pointer-events-none" />
               </>
@@ -104,11 +135,11 @@ export default function ClubUsuarioDetail() {
           </div>
 
           {/* ÁREA DE IDENTIDAD */}
-          <div className="p-6 md:p-8 bg-white border-t border-gray-50 relative">
+          <div className="p-6 md:p-8 bg-white relative">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="flex items-start gap-4">
                 <div className="bg-amber-50 text-[#e67e22] p-4 rounded-2xl border border-amber-100 shrink-0 hidden sm:block shadow-2xs">
-                  <FaBookOpen size={28} />
+                  <FaBookOpen size={24} />
                 </div>
                 
                 <div className="space-y-1">
@@ -159,11 +190,48 @@ export default function ClubUsuarioDetail() {
               <button 
                 type="button"
                 onClick={() => navigate(`/crear-obra/${id}`)}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#e67e22] border border-[#e67e22] px-5 py-3 text-xs font-black uppercase tracking-wider text-white hover:bg-orange-600 transition"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#e67e22] border border-[#e67e22] px-5 py-3 text-xs font-black uppercase tracking-wider text-white hover:bg-orange-600 transition shadow-3xs cursor-pointer active:scale-98"
               >
                 <FaCloudUploadAlt size={16} /> Crear Obra
               </button>
             </div>
+
+            {/* LISTADO DE OBRAS CORREGIDO (Usa 'obras' en lugar de 'misObras') */}
+            {obras.length > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-2xs space-y-4">
+                <div className="pb-2 border-b border-gray-100">
+                  <h2 className="text-xs font-black uppercase tracking-widest text-[#2c3e50]">
+                    Tu obra en este club
+                  </h2>
+                </div>
+
+                <div className="space-y-3">
+                  {obras.map((obra) => (
+                    <div
+                      key={obra._id}
+                      className="flex items-center justify-between p-4 bg-gray-50/50 border border-gray-100 rounded-xl hover:bg-gray-50 transition gap-4"
+                    >
+                      <div className="space-y-1.5">
+                        <p className="text-sm font-black text-[#2c3e50] uppercase tracking-tight">
+                          {obra.titulo}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          {renderBadgeEstadoObra(obra.estado)}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/mis-obras/${obra._id}`)}
+                        className="inline-flex items-center justify-center px-4 py-2 text-xs font-black uppercase tracking-wider bg-white border border-gray-200 text-[#2c3e50] hover:text-[#e67e22] hover:border-orange-200 rounded-xl shadow-3xs transition cursor-pointer active:scale-95 shrink-0"
+                      >
+                        Continuar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
           </div>
 
@@ -174,8 +242,8 @@ export default function ClubUsuarioDetail() {
             <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-2xs">
               <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 text-[#2c3e50]">
                 <FaShieldAlt size={14} className="text-[#e67e22]" />
-                <h2 className="text-xs font-bold uppercase tracking-widest">
-                  Moderadores del Club ({club.moderadores?.length || 0})
+                <h2 className="text-xs font-black uppercase tracking-widest">
+                  Moderadores ({club.moderadores?.length || 0})
                 </h2>
               </div>
 
@@ -189,9 +257,7 @@ export default function ClubUsuarioDetail() {
                         key={mod._id}
                         className="flex items-center justify-between gap-3 bg-gray-50/60 border border-gray-100 rounded-xl p-2.5 transition hover:bg-gray-50"
                       >
-                        {/* Contenedor de datos principales */}
                         <div className="flex items-center gap-3 min-w-0">
-                          {/* CONTENEDOR DEL AVATAR */}
                           <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-100 text-[#e67e22] font-black text-xs flex items-center justify-center select-none shrink-0 overflow-hidden">
                             {mod.avatar ? (
                               <img 
@@ -204,7 +270,6 @@ export default function ClubUsuarioDetail() {
                             )}
                           </div>
 
-                          {/* TEXTOS INFORMATIVOS */}
                           <div className="min-w-0">
                             <p className="text-xs font-black text-[#2c3e50] uppercase tracking-tight truncate">
                               {mod.nombres} {mod.apellidos}
@@ -215,7 +280,6 @@ export default function ClubUsuarioDetail() {
                           </div>
                         </div>
 
-                        {/* ACCIÓN VER PERFIL DEL MODERADOR */}
                         <button
                           type="button"
                           onClick={() => navigate(`/perfil/${mod._id}`)}
@@ -238,8 +302,8 @@ export default function ClubUsuarioDetail() {
             {/* SECCIÓN MIEMBROS ACTIVOS */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-2xs">
               <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 text-[#2c3e50]">
-                <FaUsers size={14} className="text-blue-500" />
-                <h2 className="text-xs font-bold uppercase tracking-widest">
+                <FaUsers size={14} className="text-[#e67e22]" />
+                <h2 className="text-xs font-black uppercase tracking-widest">
                   Comunidad Activa ({miembros.length})
                 </h2>
               </div>
@@ -257,7 +321,6 @@ export default function ClubUsuarioDetail() {
                         className="flex items-center justify-between gap-3 p-2 bg-slate-50/50 border border-gray-100 rounded-xl hover:bg-slate-50 transition"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          {/* CONTENEDOR AVATAR */}
                           <div className="w-8 h-8 rounded-lg bg-slate-100 text-[#2c3e50] font-black text-xs flex items-center justify-center border border-gray-200 select-none shrink-0 overflow-hidden">
                             {u.avatar ? (
                               <img src={u.avatar} alt="Avatar" className="w-full h-full object-cover" />
@@ -276,11 +339,10 @@ export default function ClubUsuarioDetail() {
                           </div>
                         </div>
 
-                        {/* ACCIÓN VER PERFIL */}
                         <button
                           type="button"
                           onClick={() => navigate(`/perfil/${u._id}`)}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50/60 rounded-lg transition shrink-0 cursor-pointer active:scale-90"
+                          className="p-2 text-slate-400 hover:text-[#e67e22] hover:bg-amber-50 rounded-lg transition shrink-0 cursor-pointer active:scale-90"
                           title={`Ver perfil de ${u.nombres}`}
                         >
                           <FaEye size={14} />

@@ -47,8 +47,9 @@ import ClubUsuarioDetail from "./pages/usuario/ClubUsuarioDetail"
 
 import Menu from "./pages/Menu"
 import ObrasMenu from "./pages/ObrasMenu"
-import CrearObra from "./pages/CrearObra"
+import CrearObra from "./pages/obras/CrearObra"
 import MisObras from "./pages/MisObras"
+import MiObraDetail from "./pages/usuario/MiObraDetail"
 import ObraDetalle from "./pages/ObraDetalle"
 import ObraModeracion from "./pages/moderator/ObraModeracion"
 import ModerationPanel from "./pages/moderator/ModerationPanel"
@@ -126,7 +127,7 @@ function App() {
 
             <Route path="/menu" element={<Menu />} />
 
-            <Route path="/mis-clubes/:id" element={<ClubUsuarioDetail />} />
+            <Route path="/club-usuario/:id" element={<ClubUsuarioDetail />} />
 
             <Route path="/obras" element={<ObrasMenu />} />
 
@@ -138,6 +139,11 @@ function App() {
             <Route
               path="/mis-obras"
               element={<MisObras />}
+            />
+
+            <Route
+              path="/mis-obras/:id"
+              element={<MiObraDetail />}
             />
 
             <Route

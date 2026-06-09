@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getMyAssignedClubById, listarMiembrosClub } from "../../services/clubService";
-import { FaBookOpen, FaArrowLeft, FaShieldAlt, FaUsers, FaImage } from "react-icons/fa";
+import { listarObrasClub } from "../../services/obraService";
+import { FaBookOpen, FaArrowLeft, FaShieldAlt, FaUsers, FaImage, FaCheckCircle, FaClock, FaEdit } from "react-icons/fa";
 
 export default function MyClubDetail() {
   const { id } = useParams();
@@ -9,6 +10,7 @@ export default function MyClubDetail() {
 
   const [club, setClub] = useState(null);
   const [miembros, setMiembros] = useState([]);
+  const [obras, setObras] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
@@ -23,11 +25,14 @@ export default function MyClubDetail() {
       } else {
         setMiembros([]);
       }
+
+      const obrasRes = await listarObrasClub(id);
+      setObras(obrasRes.obras || []);
     } catch (error) {
       console.error("Error cargando club:", error);
       setClub(null);
       setMiembros([]);
-    } bits: {
+    } finally {
       setLoading(false);
     }
   };
@@ -35,6 +40,30 @@ export default function MyClubDetail() {
   useEffect(() => {
     if (id) fetchData();
   }, [id]);
+
+  // Helper para renderizar los badges de estado de la obra con elegancia
+  const renderEstadoBadge = (estado) => {
+    switch (estado) {
+      case "Aprobada":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100">
+            <FaCheckCircle size={10} /> Aprobada
+          </span>
+        );
+      case "EnRevision":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-600 border border-amber-100 animate-pulse">
+            <FaClock size={10} /> En Revisión
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-gray-50 text-gray-500 border border-gray-100">
+            {estado}
+          </span>
+        );
+    }
+  };
 
   if (loading) {
     return (
@@ -64,9 +93,9 @@ export default function MyClubDetail() {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#2c3e50] hover:bg-gray-50 transition shadow-3xs cursor-pointer active:scale-98"
+            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#2c3e50] hover:text-[#e67e22] hover:border-orange-200 transition shadow-3xs cursor-pointer active:scale-98 group"
           >
-            <FaArrowLeft size={12} /> Volver
+            <FaArrowLeft size={11} className="transition-transform duration-200 group-hover:-translate-x-0.5" /> Volver
           </button>
         </div>
 
@@ -133,6 +162,7 @@ export default function MyClubDetail() {
           
           {/* COLUMNA IZQUIERDA: CONTENIDO */}
           <div className="lg:col-span-2 space-y-6">
+            {/* SOBRE EL CLUB */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-2xs">
               <h2 className="text-xs font-black uppercase tracking-widest text-[#2c3e50] mb-3 pb-2 border-b border-gray-100">
                 Sobre el Club
@@ -140,6 +170,57 @@ export default function MyClubDetail() {
               <p className="text-sm text-gray-600 font-medium leading-relaxed whitespace-pre-line">
                 {club.descripcion}
               </p>
+            </div>
+
+            {/* SECCIÓN OBRAS REDISEÑADA */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-2xs">
+              <div className="flex items-center justify-between mb-5 pb-2 border-b border-gray-100">
+                <h2 className="text-xs font-black uppercase tracking-widest text-[#2c3e50]">
+                  Obras del Club
+                </h2>
+                <span className="bg-slate-100 text-[#2c3e50] font-black text-xs px-2.5 py-1 rounded-lg">
+                  {obras.length} {obras.length === 1 ? 'Obra' : 'Obras'}
+                </span>
+              </div>
+
+              {obras.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4.5">
+                  {obras.map((obra) => (
+                    <div
+                      key={obra._id}
+                      className="group border border-gray-100 bg-gray-50/30 rounded-2xl p-5 flex flex-col sm:flex-row justify-between sm:items-center gap-4 transition-all duration-300 hover:bg-white hover:shadow-sm hover:border-gray-200/80"
+                    >
+                      <div className="space-y-1.5 min-w-0">
+                        <h3 className="font-black text-base text-[#2c3e50] uppercase tracking-tight truncate group-hover:text-[#e67e22] transition-colors duration-200">
+                          {obra.titulo}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Estado de lectura:</span>
+                          {renderEstadoBadge(obra.estado)}
+                        </div>
+                      </div>
+
+                      <div className="flex sm:justify-end shrink-0">
+                        {(obra.estado === "EnRevision" || obra.estado === "Aprobada") && (
+                          <button
+                            onClick={() => navigate(`/moderacion/${obra._id}`)}
+                            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#2c3e50] hover:bg-[#e67e22] text-white text-xs font-black uppercase tracking-wider transition-all duration-300 shadow-3xs cursor-pointer active:scale-97 hover:shadow-sm"
+                          >
+                            <FaEdit size={12} /> Moderar
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-10 text-center border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/20">
+                  <FaBookOpen size={32} className="text-gray-300 mx-auto mb-2.5" />
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                    No existen obras registradas en este club.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

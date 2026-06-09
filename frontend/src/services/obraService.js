@@ -66,6 +66,17 @@ export const actualizarObra = async (id, datosObra) => {
     }
 };
 
+// LISTAR MIS OBRAS DENTRO DE UN CLUB
+export const listarMisObrasClub = async (clubId) => {
+  try {
+    const response = await api.get(`/obras/club/${clubId}/mis-obras`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al listar mis obras del club:", error);
+    throw error;
+  }
+};
+
 /*==========================================================================
 | POSTULAR OBRA
 ==========================================================================*/
@@ -90,6 +101,21 @@ export const aprobarObra = async (id) => {
         console.error("Error al aprobar obra:", error);
         throw error;
     }
+};
+
+//RECHAZAR OBRA (moderador)
+export const rechazarObra = async (id, motivo) => {
+  try {
+    const response = await api.post(
+      `/obras/${id}/rechazar`,
+      { motivo }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error al rechazar obra:", error);
+    throw error;
+  }
 };
 
 /*==========================================================================

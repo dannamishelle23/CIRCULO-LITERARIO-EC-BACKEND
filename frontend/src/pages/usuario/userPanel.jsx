@@ -197,7 +197,7 @@ export default function UserPanel() {
                   {estado === "Aprobado" && (
                     <button
                       type="button"
-                      onClick={() => navigate(`/mis-clubes/${club._id}`)}
+                      onClick={() => navigate(`/club-usuario/${club._id}`)}
                       className="p-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-[#2c3e50] transition text-xs font-bold uppercase flex items-center justify-center cursor-pointer active:scale-95"
                       title="Entrar al club"
                     >
