@@ -1,6 +1,7 @@
 import Obra from "../models/Obras.js";
 import Capitulo from "../models/Capitulos.js";
 import Club from "../models/Clubes.js";
+import ClubMiembros from "../models/ClubMiembros.js";
 import { subirImagenCloudinary } from "../helpers/uploadCloudinary.js";
 
 // =========================
@@ -22,6 +23,28 @@ export const crearObra = async (req, res) => {
     if (!clubExiste) {
       return res.status(404).json({
         msg: "Club no encontrado."
+      });
+    }
+
+    if (clubExiste.estadoClub !== "Activo") {
+      return res.status(400).json({
+        msg:
+          "No puedes publicar obras en un club suspendido."
+      });
+    }
+
+    const miembro = await ClubMiembros.findOne({
+        club,
+        usuario:
+          req.usuarioHeader._id,
+        estadoSolicitud:
+          "Aprobado"
+      });
+
+    if (!miembro) {
+      return res.status(403).json({
+        msg:
+          "Debes ser miembro aprobado del club."
       });
     }
 
@@ -101,7 +124,8 @@ export const obtenerObra = async (req, res) => {
       club: obra.club,
       votos: obra.votos.length,
       fechaInicioVotacion: obra.fechaInicioVotacion,
-      fechaFinVotacion: obra.fechaFinVotacion
+      fechaFinVotacion: obra.fechaFinVotacion,
+      motivoRechazo: obra.motivoRechazo
     };
 
     if (
@@ -147,6 +171,7 @@ export const listarObrasClub = async (req, res) => {
         $in: [
           "Aprobada",
           "EnVotacion",
+          "Ganadora",
           "Publicada"
         ]
       }
@@ -200,12 +225,12 @@ export const actualizarObra = async (req, res) => {
     }
 
     if (
-      ["EnVotacion", "Publicada"]
+      ["EnRevision","EnVotacion", "Publicada"]
       .includes(obra.estado)
     ) {
       return res.status(400).json({
         msg:
-          "No puedes editar una obra en votación o publicada."
+          "No puedes editar una obra en este estado."
       });
     }
 
@@ -274,7 +299,7 @@ export const postularObra = async (req, res) => {
     if (totalCapitulos < 3) {
       return res.status(400).json({
         msg:
-          "La obra debe tener mínimo 3 capítulos."
+          "La obra debe tener al menos 3 capítulos para ser postulada."
       });
     }
 
@@ -311,9 +336,39 @@ export const postularObra = async (req, res) => {
 };
 
 // =========================
+// LISTAR MIS OBRAS EN UN CLUB (incluye borrador)
+// =========================
+export const listarMisObrasClub = async (req, res) => {
+  try {
+    const { clubId } = req.params;
+
+    const obras = await Obra.find({
+      club: clubId,
+      autor: req.usuarioHeader._id,
+      activo: true
+    })
+      .populate("club", "nombre generoLiterario")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      ok: true,
+      obras
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      ok: false,
+      msg: "Error al listar mis obras del club"
+    });
+  }
+};
+
+// =========================
 // APROBAR OBRA
 // =========================
 export const aprobarObra = async (req, res) => {
+  console.log("ENTRO A APROBAR OBRA");
   try {
 
     const { id } = req.params;
@@ -326,18 +381,30 @@ export const aprobarObra = async (req, res) => {
       });
     }
 
-    if (
-      obra.estado !== "EnRevision"
-    ) {
+    if (obra.estado !== "EnRevision") {
       return res.status(400).json({
-        msg:
-          "Solo las obras en revisión pueden aprobarse."
+        msg: "Solo las obras en revisión pueden aprobarse."
+      });
+    }
+
+    const club = await Club.findById(obra.club);
+
+    const esModeradorDelClub =
+      club.moderadores.some(
+        mod =>
+          mod.toString() ===
+          req.usuarioHeader._id.toString()
+      );
+
+    if (!esModeradorDelClub) {
+      return res.status(403).json({
+        msg: "No eres moderador de este club."
       });
     }
 
     obra.estado = "Aprobada";
-    obra.fechaAprobacion =
-      new Date();
+    obra.fechaAprobacion = new Date();
+    obra.aprobadoPor = req.usuarioHeader._id;
 
     await obra.save();
 
@@ -353,6 +420,60 @@ export const aprobarObra = async (req, res) => {
 
     res.status(500).json({
       msg: "Error al aprobar obra."
+    });
+  }
+};
+
+export const rechazarObra = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { motivo } = req.body;
+
+    const obra = await Obra.findById(id);
+
+    if (!obra) {
+      return res.status(404).json({
+        msg: "Obra no encontrada."
+      });
+    }
+
+    if (obra.estado !== "EnRevision") {
+      return res.status(400).json({
+        msg: "Solo se pueden rechazar obras en revisión."
+      });
+    }
+
+    const club = await Club.findById(obra.club);
+
+    const esModeradorDelClub =
+      club.moderadores.some(
+        mod => mod.toString() === req.usuarioHeader._id.toString()
+      );
+
+    if (!esModeradorDelClub) {
+      return res.status(403).json({
+        msg: "No eres moderador de este club."
+      });
+    }
+
+    obra.estado = "Rechazada";
+    obra.motivoRechazo = motivo || "Sin motivo";
+    obra.rechazadoPor = req.usuarioHeader._id;
+
+    await obra.save();
+
+    res.status(200).json({
+      ok: true,
+      msg: "Obra rechazada correctamente.",
+      obra
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      msg: "Error al rechazar obra."
     });
   }
 };
@@ -373,19 +494,30 @@ export const iniciarVotacion = async (req, res) => {
       });
     }
 
-    if (
-      obra.estado !== "Aprobada"
-    ) {
+    if (obra.estado !== "Aprobada") {
       return res.status(400).json({
-        msg:
-          "La obra debe estar aprobada."
+        msg: "La obra debe estar aprobada."
+      });
+    }
+
+    const club = await Club.findById(obra.club);
+
+    const esModeradorDelClub =
+      club.moderadores.some(
+        mod =>
+          mod.toString() ===
+          req.usuarioHeader._id.toString()
+      );
+
+    if (!esModeradorDelClub) {
+      return res.status(403).json({
+        msg: "No eres moderador de este club."
       });
     }
 
     const hoy = new Date();
 
-    const fechaFin =
-      new Date(hoy);
+    const fechaFin = new Date(hoy);
 
     fechaFin.setDate(
       fechaFin.getDate() + 7
@@ -399,8 +531,7 @@ export const iniciarVotacion = async (req, res) => {
 
     res.status(200).json({
       ok: true,
-      msg:
-        "La votación estará activa durante 7 días.",
+      msg: "La votación estará activa durante 7 días.",
       obra
     });
 
@@ -409,8 +540,7 @@ export const iniciarVotacion = async (req, res) => {
     console.error(error);
 
     res.status(500).json({
-      msg:
-        "Error al iniciar la votación."
+      msg: "Error al iniciar la votación."
     });
   }
 };

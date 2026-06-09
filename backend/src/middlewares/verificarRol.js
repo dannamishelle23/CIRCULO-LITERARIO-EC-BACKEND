@@ -1,7 +1,7 @@
 const verificarRol = (...rolesPermitidos) => {
   return (req, res, next) => {
     try {
-      const usuario = req.usuario;
+      const usuario = req.usuarioHeader;
 
       if (!usuario) {
         return res.status(401).json({ msg: "No autenticado" });

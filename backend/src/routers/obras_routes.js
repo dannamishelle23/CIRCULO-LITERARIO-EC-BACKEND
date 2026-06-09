@@ -7,6 +7,7 @@ import {
   postularObra,
   aprobarObra,
   iniciarVotacion,
+  listarMisObrasClub
 } from "../controllers/obras_controller.js";
 
 import { verificarTokenJWT } from "../middlewares/JWT.js";
@@ -67,6 +68,12 @@ router.post(
   verificarTokenJWT,
   verificarRol("Moderador"),
   aprobarObra
+);
+
+router.get(
+  "/club/:clubId/mis-obras",
+  verificarTokenJWT,
+  listarMisObrasClub
 );
 
 /* =========================

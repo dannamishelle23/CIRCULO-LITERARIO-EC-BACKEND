@@ -107,6 +107,16 @@ const ObraSchema = new Schema(
     motivoRechazo: {
       type: String,
       default: null
+    },
+    aprobadoPor: {
+      type: Schema.Types.ObjectId,
+      ref: "Usuarios",
+      default: null
+    },
+    rechazadoPor: {
+      type: Schema.Types.ObjectId,
+      ref: "Usuarios",
+      default: null
     }
   },
   {
