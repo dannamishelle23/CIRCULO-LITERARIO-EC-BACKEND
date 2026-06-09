@@ -42,7 +42,7 @@ export default function CrearObra() {
       setMensaje("Manuscrito registrado correctamente. Redirigiendo a tu espacio...")
       
       setTimeout(() => {
-        navigate(`/mi-obra/${response.obra._id}`)
+        navigate(`/mis-obras/${response.obra._id}`)
       }, 2000)
     } catch (error) {
       setTipoMensaje("error")

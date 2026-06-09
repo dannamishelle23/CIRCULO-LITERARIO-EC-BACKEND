@@ -54,6 +54,32 @@ export const listarObrasClub = async (clubId) => {
 };
 
 /*==========================================================================
+| LISTAR OBRAS EN REVISIÓN (Moderador)
+==========================================================================*/
+export const listarObrasEnRevision = async (clubId) => {
+    try {
+        const response = await api.get(`/obras/moderador/${clubId}/en-revision`);
+        return response.data;
+    } catch (error) {
+        console.error("Error al listar obras en revisión:", error);
+        throw error;
+    }
+};
+
+/*==========================================================================
+| LISTAR OBRAS APROBADAS (Moderador)
+==========================================================================*/
+export const listarObrasAprobadas = async (clubId) => {
+    try {
+        const response = await api.get(`/obras/moderador/${clubId}/aprobadas`);
+        return response.data;
+    } catch (error) {
+        console.error("Error al listar obras aprobadas:", error);
+        throw error;
+    }
+};
+
+/*==========================================================================
 | ACTUALIZAR OBRA
 ==========================================================================*/
 export const actualizarObra = async (id, datosObra) => {

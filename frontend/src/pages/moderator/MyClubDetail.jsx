@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getMyAssignedClubById, listarMiembrosClub } from "../../services/clubService";
-import { listarObrasClub } from "../../services/obraService";
-import { FaBookOpen, FaArrowLeft, FaShieldAlt, FaUsers, FaImage, FaCheckCircle, FaClock, FaEdit } from "react-icons/fa";
+import { listarObrasClub, listarObrasEnRevision, listarObrasAprobadas, aprobarObra, rechazarObra, iniciarVotacion } from "../../services/obraService";
+import { FaBookOpen, FaArrowLeft, FaShieldAlt, FaUsers, FaImage, FaCheckCircle, FaClock, FaEdit, FaThumbsUp, FaTimes, FaHourglassEnd } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 export default function MyClubDetail() {
   const { id } = useParams();
@@ -11,7 +12,12 @@ export default function MyClubDetail() {
   const [club, setClub] = useState(null);
   const [miembros, setMiembros] = useState([]);
   const [obras, setObras] = useState([]);
+  const [obrasEnRevision, setObrasEnRevision] = useState([]);
+  const [obrasAprobadas, setObrasAprobadas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [procesando, setProcesando] = useState(false);
+  const [motivoRechazo, setMotivoRechazo] = useState({});
+  const [mostrarRechazo, setMostrarRechazo] = useState({});
 
   const fetchData = async () => {
     try {
@@ -28,6 +34,14 @@ export default function MyClubDetail() {
 
       const obrasRes = await listarObrasClub(id);
       setObras(obrasRes.obras || []);
+
+      // Obtener obras en revisión
+      const obrasRevisionRes = await listarObrasEnRevision(id);
+      setObrasEnRevision(obrasRevisionRes.obras || []);
+
+      // Obtener obras aprobadas
+      const obrasAprobadosRes = await listarObrasAprobadas(id);
+      setObrasAprobadas(obrasAprobadosRes.obras || []);
     } catch (error) {
       console.error("Error cargando club:", error);
       setClub(null);
@@ -40,6 +54,59 @@ export default function MyClubDetail() {
   useEffect(() => {
     if (id) fetchData();
   }, [id]);
+
+  // Manejar aprobación de obra
+  const handleAprobar = async (obraId) => {
+    try {
+      setProcesando(true);
+      await aprobarObra(obraId);
+      toast.success("Obra aprobada correctamente");
+      fetchData();
+    } catch (error) {
+      toast.error("Error al aprobar la obra");
+      console.error(error);
+    } finally {
+      setProcesando(false);
+    }
+  };
+
+  // Manejar rechazo de obra
+  const handleRechazar = async (obraId) => {
+    const motivo = motivoRechazo[obraId];
+    if (!motivo || !motivo.trim()) {
+      toast.error("Debes ingresar un motivo de rechazo");
+      return;
+    }
+
+    try {
+      setProcesando(true);
+      await rechazarObra(obraId, motivo);
+      toast.success("Obra rechazada correctamente");
+      setMotivoRechazo({ ...motivoRechazo, [obraId]: "" });
+      setMostrarRechazo({ ...mostrarRechazo, [obraId]: false });
+      fetchData();
+    } catch (error) {
+      toast.error("Error al rechazar la obra");
+      console.error(error);
+    } finally {
+      setProcesando(false);
+    }
+  };
+
+  // Manejar inicio de votación
+  const handleIniciarVotacion = async (obraId) => {
+    try {
+      setProcesando(true);
+      await iniciarVotacion(obraId);
+      toast.success("Votación iniciada correctamente");
+      fetchData();
+    } catch (error) {
+      toast.error("Error al iniciar votación");
+      console.error(error);
+    } finally {
+      setProcesando(false);
+    }
+  };
 
   // Helper para renderizar los badges de estado de la obra con elegancia
   const renderEstadoBadge = (estado) => {
@@ -54,6 +121,12 @@ export default function MyClubDetail() {
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-600 border border-amber-100 animate-pulse">
             <FaClock size={10} /> En Revisión
+          </span>
+        );
+      case "EnVotacion":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-600 border border-blue-100">
+            <FaThumbsUp size={10} /> En Votación
           </span>
         );
       default:
@@ -172,18 +245,155 @@ export default function MyClubDetail() {
               </p>
             </div>
 
-            {/* SECCIÓN OBRAS REDISEÑADA */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-2xs">
-              <div className="flex items-center justify-between mb-5 pb-2 border-b border-gray-100">
-                <h2 className="text-xs font-black uppercase tracking-widest text-[#2c3e50]">
-                  Obras del Club
-                </h2>
-                <span className="bg-slate-100 text-[#2c3e50] font-black text-xs px-2.5 py-1 rounded-lg">
-                  {obras.length} {obras.length === 1 ? 'Obra' : 'Obras'}
-                </span>
-              </div>
+            {/* SECCIÓN OBRAS EN REVISIÓN */}
+            {obrasEnRevision.length > 0 && (
+              <div className="bg-white rounded-2xl border border-amber-100 p-6 shadow-2xs">
+                <div className="flex items-center justify-between mb-5 pb-2 border-b border-amber-100">
+                  <div className="flex items-center gap-2">
+                    <FaClock className="text-amber-600" size={16} />
+                    <h2 className="text-xs font-black uppercase tracking-widest text-amber-700">
+                      Obras en Revisión
+                    </h2>
+                  </div>
+                  <span className="bg-amber-100 text-amber-700 font-black text-xs px-2.5 py-1 rounded-lg">
+                    {obrasEnRevision.length}
+                  </span>
+                </div>
 
-              {obras.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4">
+                  {obrasEnRevision.map((obra) => (
+                    <div
+                      key={obra._id}
+                      className="border border-amber-100 bg-amber-50/50 rounded-2xl p-5 space-y-4"
+                    >
+                      <div className="space-y-2">
+                        <h3 className="font-black text-base text-[#2c3e50] uppercase tracking-tight">
+                          {obra.titulo}
+                        </h3>
+                        <p className="text-xs text-gray-600 line-clamp-2">
+                          {obra.sinopsis}
+                        </p>
+                        <div className="flex items-center gap-2 pt-1">
+                          <span className="text-[10px] text-gray-500 font-bold">Autor:</span>
+                          <span className="text-xs font-bold text-[#2c3e50]">
+                            {obra.autor?.nombres} {obra.autor?.apellidos}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Formulario de rechazo */}
+                      {mostrarRechazo[obra._id] && (
+                        <div className="bg-white border border-red-200 rounded-xl p-4 space-y-3">
+                          <textarea
+                            value={motivoRechazo[obra._id] || ""}
+                            onChange={(e) => setMotivoRechazo({ ...motivoRechazo, [obra._id]: e.target.value })}
+                            placeholder="Ingresa el motivo del rechazo..."
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
+                            rows="3"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleRechazar(obra._id)}
+                              disabled={procesando}
+                              className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition disabled:opacity-50"
+                            >
+                              {procesando ? "Procesando..." : "Confirmar Rechazo"}
+                            </button>
+                            <button
+                              onClick={() => setMostrarRechazo({ ...mostrarRechazo, [obra._id]: false })}
+                              className="flex-1 px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold rounded-lg transition"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Botones de acción */}
+                      {!mostrarRechazo[obra._id] && (
+                        <div className="flex gap-2 pt-2">
+                          <button
+                            onClick={() => handleAprobar(obra._id)}
+                            disabled={procesando}
+                            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase transition disabled:opacity-50"
+                          >
+                            <FaCheckCircle size={12} /> Aprobar
+                          </button>
+                          <button
+                            onClick={() => setMostrarRechazo({ ...mostrarRechazo, [obra._id]: true })}
+                            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase transition"
+                          >
+                            <FaTimes size={12} /> Rechazar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SECCIÓN OBRAS APROBADAS */}
+            {obrasAprobadas.length > 0 && (
+              <div className="bg-white rounded-2xl border border-emerald-100 p-6 shadow-2xs">
+                <div className="flex items-center justify-between mb-5 pb-2 border-b border-emerald-100">
+                  <div className="flex items-center gap-2">
+                    <FaCheckCircle className="text-emerald-600" size={16} />
+                    <h2 className="text-xs font-black uppercase tracking-widest text-emerald-700">
+                      Obras Aprobadas - Listas para Votación
+                    </h2>
+                  </div>
+                  <span className="bg-emerald-100 text-emerald-700 font-black text-xs px-2.5 py-1 rounded-lg">
+                    {obrasAprobadas.length}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  {obrasAprobadas.map((obra) => (
+                    <div
+                      key={obra._id}
+                      className="border border-emerald-100 bg-emerald-50/50 rounded-2xl p-5 flex flex-col sm:flex-row justify-between sm:items-center gap-4"
+                    >
+                      <div className="space-y-2 flex-1">
+                        <h3 className="font-black text-base text-[#2c3e50] uppercase tracking-tight">
+                          {obra.titulo}
+                        </h3>
+                        <p className="text-xs text-gray-600 line-clamp-2">
+                          {obra.sinopsis}
+                        </p>
+                        <div className="flex items-center gap-2 pt-1">
+                          <span className="text-[10px] text-gray-500 font-bold">Autor:</span>
+                          <span className="text-xs font-bold text-[#2c3e50]">
+                            {obra.autor?.nombres} {obra.autor?.apellidos}
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleIniciarVotacion(obra._id)}
+                        disabled={procesando}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase transition disabled:opacity-50 whitespace-nowrap"
+                      >
+                        <FaHourglassEnd size={12} /> Poner a Votación
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SECCIÓN OBRAS REGULARES */}
+            {obrasEnRevision.length === 0 && obrasAprobadas.length === 0 && obras.length > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-2xs">
+                <div className="flex items-center justify-between mb-5 pb-2 border-b border-gray-100">
+                  <h2 className="text-xs font-black uppercase tracking-widest text-[#2c3e50]">
+                    Obras del Club
+                  </h2>
+                  <span className="bg-slate-100 text-[#2c3e50] font-black text-xs px-2.5 py-1 rounded-lg">
+                    {obras.length} {obras.length === 1 ? 'Obra' : 'Obras'}
+                  </span>
+                </div>
+
                 <div className="grid grid-cols-1 gap-4.5">
                   {obras.map((obra) => (
                     <div
@@ -195,33 +405,24 @@ export default function MyClubDetail() {
                           {obra.titulo}
                         </h3>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Estado de lectura:</span>
+                          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Estado:</span>
                           {renderEstadoBadge(obra.estado)}
                         </div>
-                      </div>
-
-                      <div className="flex sm:justify-end shrink-0">
-                        {(obra.estado === "EnRevision" || obra.estado === "Aprobada") && (
-                          <button
-                            onClick={() => navigate(`/moderacion/${obra._id}`)}
-                            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#2c3e50] hover:bg-[#e67e22] text-white text-xs font-black uppercase tracking-wider transition-all duration-300 shadow-3xs cursor-pointer active:scale-97 hover:shadow-sm"
-                          >
-                            <FaEdit size={12} /> Moderar
-                          </button>
-                        )}
                       </div>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="py-10 text-center border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/20">
-                  <FaBookOpen size={32} className="text-gray-300 mx-auto mb-2.5" />
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                    No existen obras registradas en este club.
-                  </p>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {obrasEnRevision.length === 0 && obrasAprobadas.length === 0 && obras.length === 0 && (
+              <div className="py-10 text-center border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/20">
+                <FaBookOpen size={32} className="text-gray-300 mx-auto mb-2.5" />
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                  No existen obras registradas en este club.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* COLUMNA DERECHA: SIDEBAR */}
