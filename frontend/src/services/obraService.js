@@ -4,101 +4,115 @@ import api from "./api";
 | CREAR OBRA
 ==========================================================================*/
 export const crearObra = async (datosObra) => {
-    try {
-        const formData = new FormData();
-        formData.append("titulo", datosObra.titulo);
-        formData.append("sinopsis", datosObra.sinopsis);
-        formData.append("prologo", datosObra.prologo);
-        formData.append("club", datosObra.club);
-        if (datosObra.portada) {
-            formData.append("portada", datosObra.portada);
-        }
+  try {
+    const formData = new FormData();
+    formData.append("titulo", datosObra.titulo);
+    formData.append("sinopsis", datosObra.sinopsis);
+    formData.append("prologo", datosObra.prologo);
+    formData.append("club", datosObra.club);
 
-        const response = await api.post("/obras", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        });
-
-        return response.data;
-    } catch (error) {
-        console.error("Error al crear obra:", error);
-        throw error;
+    if (datosObra.portada) {
+      formData.append("portada", datosObra.portada);
     }
+
+    const response = await api.post("/obras", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error al crear obra:", error);
+    throw error;
+  }
 };
 
 /*==========================================================================
-| OBTENER OBRA POR ID
+| OBTENER OBRA
 ==========================================================================*/
 export const obtenerObra = async (id) => {
-    try {
-        const response = await api.get(`/obras/${id}`);
-        return response.data;
-    } catch (error) {
-        console.error("Error al obtener obra:", error);
-        throw error;
-    }
+  try {
+    const response = await api.get(`/obras/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener obra:", error);
+    throw error;
+  }
 };
 
 /*==========================================================================
-| LISTAR OBRAS DE UN CLUB
+| PERFIL AUTOR (SOLO APROBADAS)
+==========================================================================*/
+export const listarObrasPublicasAutor = async (autorId) => {
+  try {
+    const response = await api.get(`/obras/autor/${autorId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al listar obras del autor:", error);
+    throw error;
+  }
+};
+
+/*==========================================================================
+| OBRAS DEL CLUB (TODAS VISIBLES SEGÚN REGLAS BACKEND)
 ==========================================================================*/
 export const listarObrasClub = async (clubId) => {
-    try {
-        const response = await api.get(`/obras/club/${clubId}`);
-        return response.data;
-    } catch (error) {
-        console.error("Error al listar obras del club:", error);
-        throw error;
-    }
+  try {
+    const response = await api.get(`/obras/club/${clubId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al listar obras del club:", error);
+    throw error;
+  }
 };
 
 /*==========================================================================
-| LISTAR OBRAS EN REVISIÓN (Moderador)
+| MIS OBRAS EN CLUB
+==========================================================================*/
+export const listarMisObrasClub = async (clubId) => {
+  try {
+    const response = await api.get(`/obras/club/${clubId}/mis-obras`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al listar mis obras:", error);
+    throw error;
+  }
+};
+
+/*==========================================================================
+| EN REVISIÓN (MODERADOR)
 ==========================================================================*/
 export const listarObrasEnRevision = async (clubId) => {
-    try {
-        const response = await api.get(`/obras/moderador/${clubId}/en-revision`);
-        return response.data;
-    } catch (error) {
-        console.error("Error al listar obras en revisión:", error);
-        throw error;
-    }
+  try {
+    const response = await api.get(`/obras/moderador/${clubId}/en-revision`);
+    return response.data;
+  } catch (error) {
+    console.error("Error en revisión:", error);
+    throw error;
+  }
 };
 
 /*==========================================================================
-| LISTAR OBRAS APROBADAS (Moderador)
+| APROBADAS (MODERADOR)
 ==========================================================================*/
 export const listarObrasAprobadas = async (clubId) => {
-    try {
-        const response = await api.get(`/obras/moderador/${clubId}/aprobadas`);
-        return response.data;
-    } catch (error) {
-        console.error("Error al listar obras aprobadas:", error);
-        throw error;
-    }
+  try {
+    const response = await api.get(`/obras/moderador/${clubId}/aprobadas`);
+    return response.data;
+  } catch (error) {
+    console.error("Error aprobadas:", error);
+    throw error;
+  }
 };
 
 /*==========================================================================
 | ACTUALIZAR OBRA
 ==========================================================================*/
 export const actualizarObra = async (id, datosObra) => {
-    try {
-        const response = await api.put(`/obras/${id}`, datosObra);
-        return response.data;
-    } catch (error) {
-        console.error("Error al actualizar obra:", error);
-        throw error;
-    }
-};
-
-// LISTAR MIS OBRAS DENTRO DE UN CLUB
-export const listarMisObrasClub = async (clubId) => {
   try {
-    const response = await api.get(`/obras/club/${clubId}/mis-obras`);
+    const response = await api.put(`/obras/${id}`, datosObra);
     return response.data;
   } catch (error) {
-    console.error("Error al listar mis obras del club:", error);
+    console.error("Error actualizar obra:", error);
     throw error;
   }
 };
@@ -107,104 +121,86 @@ export const listarMisObrasClub = async (clubId) => {
 | POSTULAR OBRA
 ==========================================================================*/
 export const postularObra = async (id) => {
-    try {
-        const response = await api.post(`/obras/${id}/postular`);
-        return response.data;
-    } catch (error) {
-        console.error("Error al postular obra:", error);
-        throw error;
-    }
-};
-
-/*==========================================================================
-| APROBAR OBRA (Moderador)
-==========================================================================*/
-export const aprobarObra = async (id) => {
-    try {
-        const response = await api.post(`/obras/${id}/aprobar`);
-        return response.data;
-    } catch (error) {
-        console.error("Error al aprobar obra:", error);
-        throw error;
-    }
-};
-
-//RECHAZAR OBRA (moderador)
-export const rechazarObra = async (id, motivo) => {
   try {
-    const response = await api.post(
-      `/obras/${id}/rechazar`,
-      { motivo }
-    );
-
+    const response = await api.post(`/obras/${id}/postular`);
     return response.data;
   } catch (error) {
-    console.error("Error al rechazar obra:", error);
+    console.error("Error postular obra:", error);
     throw error;
   }
 };
 
 /*==========================================================================
-| INICIAR VOTACIÓN (Moderador)
+| APROBAR OBRA (MODERADOR)
 ==========================================================================*/
-export const iniciarVotacion = async (id) => {
-    try {
-        const response = await api.post(`/obras/${id}/votacion`);
-        return response.data;
-    } catch (error) {
-        console.error("Error al iniciar votación:", error);
-        throw error;
-    }
+export const aprobarObra = async (id) => {
+  try {
+    const response = await api.post(`/obras/${id}/aprobar`);
+    return response.data;
+  } catch (error) {
+    console.error("Error aprobar obra:", error);
+    throw error;
+  }
 };
 
 /*==========================================================================
-| OBTENER VOTOS DE UNA OBRA
+| RECHAZAR OBRA (MODERADOR)
 ==========================================================================*/
-export const obtenerVotos = async (id) => {
-    try {
-        const response = await api.get(`/obras/${id}/votos`);
-        return response.data;
-    } catch (error) {
-        console.error("Error al obtener votos:", error);
-        throw error;
-    }
+export const rechazarObra = async (id, motivo) => {
+  try {
+    const response = await api.post(`/obras/${id}/rechazar`, {
+      motivo,
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error rechazar obra:", error);
+    throw error;
+  }
 };
 
 /*==========================================================================
-| VOTAR OBRA
+| INICIAR VOTACIÓN (MODERADOR)
+==========================================================================*/
+export const iniciarVotacion = async (clubId, obrasIds) => {
+  try {
+    const response = await api.post(
+      `/obras/club/${clubId}/iniciar-votacion`,
+      { obrasIds }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error iniciar votación:", error);
+    throw error;
+  }
+};
+
+/*==========================================================================
+| CERRAR VOTACIÓN (MODERADOR)
+==========================================================================*/
+export const cerrarVotacion = async (clubId) => {
+  try {
+    const response = await api.post(
+      `/obras/club/${clubId}/cerrar-votacion`
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error cerrar votación:", error);
+    throw error;
+  }
+};
+
+/*==========================================================================
+| VOTAR OBRA (USUARIOS DEL CLUB)
 ==========================================================================*/
 export const votarObra = async (id) => {
-    try {
-        const response = await api.post(`/obras/${id}/votar`, {});
-        return response.data;
-    } catch (error) {
-        console.error("Error al votar obra:", error);
-        throw error;
-    }
-};
-
-/*==========================================================================
-| OBTENER LIKES
-==========================================================================*/
-export const obtenerLikes = async (id) => {
-    try {
-        const response = await api.get(`/obras/${id}/likes`);
-        return response.data;
-    } catch (error) {
-        console.error("Error al obtener likes:", error);
-        throw error;
-    }
-};
-
-/*==========================================================================
-| DAR LIKE A OBRA
-==========================================================================*/
-export const likeObra = async (id) => {
-    try {
-        const response = await api.post(`/obras/${id}/like`, {});
-        return response.data;
-    } catch (error) {
-        console.error("Error al dar like:", error);
-        throw error;
-    }
+  try {
+    const response = await api.post(`/obras/${id}/votar`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al votar obra:", error);
+    throw error;
+  }
 };
