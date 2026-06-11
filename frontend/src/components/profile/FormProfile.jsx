@@ -207,6 +207,35 @@ const FormularioPerfil = ({ profile, onProfileUpdated }) => {
           </div>
         </div>
 
+        <div>
+          <label className={labelStyle}>
+            Biografía
+          </label>
+
+          <textarea
+            rows={4}
+            placeholder="Cuéntanos algo sobre ti..."
+            className={`${inputStyle} ${
+              errors.biografia || backendErrors.biografia
+                ? errorInput
+                : ""
+            }`}
+            {...register("biografia")}
+          />
+
+          {errors.biografia && (
+            <p className={errorStyle}>
+              {errors.biografia.message}
+            </p>
+          )}
+
+          {backendErrors.biografia && (
+            <p className={errorStyle}>
+              {backendErrors.biografia[0]}
+            </p>
+          )}
+        </div>
+
         {/* PROVINCIA */}
         <div>
           <label className={labelStyle}>
@@ -303,6 +332,94 @@ const FormularioPerfil = ({ profile, onProfileUpdated }) => {
               {backendErrors.email[0]}
             </p>
           )}
+        </div>
+
+        <div className="border-t pt-5 mt-5">
+          <h3 className="font-bold text-[#2c3e50] mb-4">
+            Redes Sociales
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            <div>
+              <label className={labelStyle}>
+                Facebook
+              </label>
+
+              <input
+                type="text"
+                placeholder="https://facebook.com/usuario"
+                className={inputStyle}
+                {...register("redes.facebook")}
+              />
+            </div>
+
+            <div>
+              <label className={labelStyle}>
+                Instagram
+              </label>
+
+              <input
+                type="text"
+                placeholder="https://instagram.com/usuario"
+                className={inputStyle}
+                {...register("redes.instagram")}
+              />
+            </div>
+
+            <div>
+              <label className={labelStyle}>
+                X (Twitter)
+              </label>
+
+              <input
+                type="text"
+                placeholder="https://x.com/usuario"
+                className={inputStyle}
+                {...register("redes.x")}
+              />
+            </div>
+
+            <div>
+              <label className={labelStyle}>
+                TikTok
+              </label>
+
+              <input
+                type="text"
+                placeholder="https://tiktok.com/@usuario"
+                className={inputStyle}
+                {...register("redes.tiktok")}
+              />
+            </div>
+
+            <div>
+              <label className={labelStyle}>
+                YouTube
+              </label>
+
+              <input
+                type="text"
+                placeholder="https://youtube.com/@usuario"
+                className={inputStyle}
+                {...register("redes.youtube")}
+              />
+            </div>
+
+            <div>
+              <label className={labelStyle}>
+                Sitio Web
+              </label>
+
+              <input
+                type="text"
+                placeholder="https://misitio.com"
+                className={inputStyle}
+                {...register("redes.web")}
+              />
+            </div>
+
+          </div>
         </div>
 
         <button

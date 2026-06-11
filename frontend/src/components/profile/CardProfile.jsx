@@ -1,90 +1,102 @@
-import { useRef, useState } from "react"
+import { useRef, useState } from "react";
 import { 
   MdPerson, 
   MdEmail, 
   MdLocationCity, 
   MdCake, 
   MdAdminPanelSettings, 
-  MdCameraAlt
-} from "react-icons/md"
-import { API_BASE_URL, getAuthHeaders } from "../../utils/auth" // Asegúrate de que la ruta sea correcta
+  MdCameraAlt,
+  MdFacebook,
+  MdLanguage
+} from "react-icons/md";
+
+import {
+  FaInstagram,
+  FaTiktok,
+  FaYoutube
+} from "react-icons/fa6";
+
+// Cambiamos a Simple Icons para X (Twitter) para solucionar el error de la consola
+import { SiX } from "react-icons/si";
+
+import { API_BASE_URL, getAuthHeaders } from "../../utils/auth"; // Asegúrate de que la ruta sea correcta
 
 export const CardProfile = ({ profile, onProfileUpdated }) => {
-  const fileInputRef = useRef(null)
-  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const inicial = profile?.nombres ? profile.nombres.charAt(0).toUpperCase() : "U"
+  const inicial = profile?.nombres ? profile.nombres.charAt(0).toUpperCase() : "U";
 
   const formatearFecha = (fechaISO) => {
-    if (!fechaISO) return "-"
-    const fecha = new Date(fechaISO)
+    if (!fechaISO) return "-";
+    const fecha = new Date(fechaISO);
     return fecha.toLocaleDateString("es-EC", {
       year: "numeric",
       month: "long",
       day: "numeric",
       timeZone: "UTC"
-    })
-  }
+    });
+  };
 
   const handleAvatarClick = () => {
     if (!isUploading) {
-      fileInputRef.current.click()
+      fileInputRef.current.click();
     }
-  }
+  };
 
   const handleFileChange = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
+    const file = e.target.files[0];
+    if (!file) return;
 
-    //Asegurar que capture el ID correcto 
-    const userId = profile?._id || profile?.id
+    // Asegurar que capture el ID correcto 
+    const userId = profile?._id || profile?.id;
 
     if (!userId) {
-      alert("Error: No se detectó el ID del usuario.")
-      return
+      alert("Error: No se detectó el ID del usuario.");
+      return;
     }
 
     if (!file.type.startsWith("image/")) {
-      alert("Por favor, selecciona un archivo de imagen válido.")
-      return
+      alert("Por favor, selecciona un archivo de imagen válido.");
+      return;
     }
 
     try {
-      setIsUploading(true)
-      const formData = new FormData()
-      formData.append("avatar", file)
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append("avatar", file);
 
-      const url = `${API_BASE_URL}/usuarios/actualizar-perfil/${userId}`
-      const authHeaders = getAuthHeaders() // Usualmente trae { 'Authorization': 'Bearer ...' }
+      const url = `${API_BASE_URL}/usuarios/actualizar-perfil/${userId}`;
+      const authHeaders = getAuthHeaders(); // Usualmente trae { 'Authorization': 'Bearer ...' }
       
-      //Cambiar el método de PUT a PATCH
+      // Cambiar el método de PUT a PATCH
       const response = await fetch(url, {
         method: "PATCH",
         headers: {
           ...authHeaders
         },
         body: formData
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
-      console.log(data)
+      console.log(data);
       if (response.ok) {
-        alert("Foto de perfil actualizada con éxito")
+        alert("Foto de perfil actualizada con éxito");
         if (onProfileUpdated) {
-          onProfileUpdated(data.usuario)         //Refrescar los datos en la UI de inmediato
+          onProfileUpdated(data.usuario); // Refrescar los datos en la UI de inmediato
         }
       } else {
-        alert(data.msg || "Hubo un error al subir la imagen.")
+        alert(data.msg || "Hubo un error al subir la imagen.");
       }
 
     } catch (error) {
-      console.error("Error al actualizar la foto de perfil:", error)
-      alert("Error de conexión con el servidor.")
+      console.error("Error al actualizar la foto de perfil:", error);
+      alert("Error de conexión con el servidor.");
     } finally {
-      setIsUploading(false)
+      setIsUploading(false);
     }
-  }
+  };
 
   return (
     <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-md font-sans w-full max-w-md mx-auto">
@@ -166,6 +178,18 @@ export const CardProfile = ({ profile, onProfileUpdated }) => {
             </div>
           </div>
 
+          {profile?.biografia && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-2xs">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-[#2c3e50] mb-3">
+                Biografía
+              </h3>
+
+              <p className="text-sm text-gray-600 leading-relaxed">
+                {profile?.biografia}
+              </p>
+            </div>
+          )}
+
           <div className="bg-gray-50/60 p-3 rounded-xl border border-gray-100/50 flex items-center space-x-3">
             <div className="p-2 bg-white rounded-lg text-gray-400 shadow-3xs"><MdLocationCity size={18} /></div>
             <div>
@@ -183,7 +207,94 @@ export const CardProfile = ({ profile, onProfileUpdated }) => {
           </div>
         </div>
 
+        {/* REDES SOCIALES */}
+        {profile?.redes && (
+          <div className="bg-gray-50/60 p-3 rounded-xl border border-gray-100/50 w-full mt-4">
+
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-3">
+              Redes Sociales
+            </span>
+
+            <div className="space-y-2">
+
+              {profile.redes.facebook && (
+                <a
+                  href={profile.redes.facebook}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 text-xs font-semibold text-[#2c3e50] hover:text-blue-600"
+                >
+                  <MdFacebook size={18} />
+                  Facebook
+                </a>
+              )}
+
+              {profile.redes.instagram && (
+                <a
+                  href={profile.redes.instagram}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 text-xs font-semibold text-[#2c3e50]"
+                >
+                  <FaInstagram size={16} />
+                  Instagram
+                </a>
+              )}
+
+              {profile.redes.x && (
+                <a
+                  href={profile.redes.x}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 text-xs font-semibold text-[#2c3e50]"
+                >
+                  <SiX size={14} className="mx-0.5" />
+                  X
+                </a>
+              )}
+
+              {profile.redes.tiktok && (
+                <a
+                  href={profile.redes.tiktok}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 text-xs font-semibold text-[#2c3e50]"
+                >
+                  <FaTiktok size={16} />
+                  TikTok
+                </a>
+              )}
+
+              {profile.redes.youtube && (
+                <a
+                  href={profile.redes.youtube}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 text-xs font-semibold text-[#2c3e50]"
+                >
+                  <FaYoutube size={16} />
+                  YouTube
+                </a>
+              )}
+
+              {profile.redes.web && (
+                <a
+                  href={profile.redes.web}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 text-xs font-semibold text-[#2c3e50]"
+                >
+                  <MdLanguage size={18} />
+                  Sitio Web
+                </a>
+              )}
+
+            </div>
+
+          </div>
+        )}
+
       </div>
     </div>
-  )
-}
+  );
+};

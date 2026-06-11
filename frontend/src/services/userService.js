@@ -139,5 +139,5 @@ export const updateProfile = async (id, formData) => {
 // VER PERFIL PÚBLICO DE USUARIO
 export const getPerfilUsuario = async (id) => {
   const response = await api.get(`/usuarios/perfil/${id}`);
-  return response.data.usuario;
+  return response.data;
 };
