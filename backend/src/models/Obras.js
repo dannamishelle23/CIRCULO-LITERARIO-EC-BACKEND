@@ -65,10 +65,10 @@ const ObraSchema = new Schema(
           type: Schema.Types.ObjectId,
           ref: "Usuarios",
         },
-        valor: {
-          type: Number,
-          default: 1,
-        },
+        fecha: {
+          type: Date,
+          default: Date.now,
+        }
       },
     ],
 

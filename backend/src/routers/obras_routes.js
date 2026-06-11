@@ -12,7 +12,8 @@ import {
   rechazarObra,
   iniciarVotacion,
   cerrarVotacion,
-  listarMisObrasClub
+  listarMisObrasClub,
+  votarObra
 } from "../controllers/obras_controller.js";
 
 import { verificarTokenJWT } from "../middlewares/JWT.js";
@@ -21,38 +22,40 @@ import verificarMiembroClub from "../middlewares/verificarMiembrosClub.js";
 import verificarAutorObra from "../middlewares/verificarAutorObra.js";
 
 const router = Router();
-/* =========================
-   CREAR OBRA (usuario autenticado)
-========================= */
-router.post("/",
-  verificarTokenJWT,
-  crearObra
-);
+
+//CREAR OBRA (usuario lector o autor dentro del club)
+router.post("/",verificarTokenJWT,crearObra);
+
+//LISTAR OBRAS PUBLICAS DE UN AUTOR (SE CONSULTA DESDE EL PERFIL PUBLICO DE CADA AUTOR)
+router.get("/autor/:autorId",verificarTokenJWT,listarObrasPublicasAutor);
+
+//OBTENER OBRA
+router.get("/:id",verificarTokenJWT,obtenerObra);
+
+//ACTUALIZAR OBRA (SOLO TITULO, PORTADA, SINOPSIS Y PROLOGO)
+router.put("/:id",verificarTokenJWT,verificarAutorObra,actualizarObra);
+
+//POSTULAR OBRA (PASA A REVISION POR EL MODERADOR)
+router.post("/:id/postular",verificarTokenJWT,verificarAutorObra,postularObra);
+
+//LISTAR OBRAS DE UN CLUB
+router.get("/club/:clubId",verificarTokenJWT,verificarMiembroClub,listarObrasClub);
+
+//LISTAR OBRAS SOLO DE UN USUARIO (MIS OBRAS)
+router.get("/club/:clubId/mis-obras",verificarTokenJWT,listarMisObrasClub);
+
 
 /* =========================
-   LISTAR OBRAS DEL CLUB
-   (solo miembros aprobados)
+   MODERADORES
 ========================= */
-router.get(
-  "/club/:clubId",
-  verificarTokenJWT,
-  verificarMiembroClub,
-  listarObrasClub
-);
 
-/* =========================
-   LISTAR OBRAS EN REVISIÓN DEL CLUB (moderadores)
-========================= */
-router.get(
-  "/moderador/:clubId/en-revision",
-  verificarTokenJWT,
+//LISTAR OBRAS EN REVISIÓN DEL CLUB 
+router.get("/moderador/:clubId/en-revision",verificarTokenJWT,
   verificarRol("Moderador"),
   listarObrasEnRevision
 );
 
-/* =========================
-   LISTAR OBRAS APROBADAS DEL CLUB (moderadores)
-========================= */
+//LISTAR OBRAS APROBADAS DEL CLUB 
 router.get(
   "/moderador/:clubId/aprobadas",
   verificarTokenJWT,
@@ -60,69 +63,19 @@ router.get(
   listarObrasAprobadas
 );
 
-/* =========================
-   OBTENER OBRA (preview o completa)
-========================= */
-router.get("/:id",verificarTokenJWT,obtenerObra);
+//APROBAR OBRA (LA HISTORIA PASA A APROBADA)
+router.post("/:id/aprobar",verificarTokenJWT,verificarRol("Moderador"),aprobarObra);
 
-//LISTAR OBRAS PUBLICAS DE UN AUTOR
-router.get(
-  "/autor/:autorId",
-  verificarTokenJWT,
-  listarObrasPublicasAutor
-);
-
-/* =========================
-   ACTUALIZAR OBRA
-========================= */
-router.put(
-  "/:id",
-  verificarTokenJWT,
-  verificarAutorObra,
-  actualizarObra
-);
-
-/* =========================
-   POSTULAR OBRA
-========================= */
-router.post(
-  "/:id/postular",
-  verificarTokenJWT,
-  verificarAutorObra,
-  postularObra
-);
-
-/* =========================
-   APROBAR OBRA (moderador)
-========================= */
-router.post(
-  "/:id/aprobar",
-  verificarTokenJWT,
-  verificarRol("Moderador"),
-  aprobarObra
-);
-
-/* =========================
-   RECHAZAR OBRA (moderador)
-========================= */
-router.post(
-  "/:id/rechazar",
+//RECHAZAR OBRA (LA HISTORIA PASA A BORRADOR)
+router.post("/:id/rechazar",
   verificarTokenJWT,
   verificarRol("Moderador"),
   rechazarObra
 );
 
-router.get(
-  "/club/:clubId/mis-obras",
-  verificarTokenJWT,
-  listarMisObrasClub
-);
-
-/* =========================
-   INICIAR VOTACIÓN (moderador)
-========================= */
+//INICIAR VOTACION
 router.post(
-  "/:id/votacion",
+  "/club/:clubId/iniciar-votacion",
   verificarTokenJWT,
   verificarRol("Moderador"),
   iniciarVotacion
@@ -137,5 +90,8 @@ router.post(
   verificarRol("Moderador"),
   cerrarVotacion
 );
+
+//VOTAR OBRA PARA LEER (USUARIOS DEL CLUB)
+router.post("/:id/votar",verificarTokenJWT,verificarMiembroClub,votarObra);
 
 export default router;
