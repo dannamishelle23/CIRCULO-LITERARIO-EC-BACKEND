@@ -1,4 +1,5 @@
 import Usuarios from "../models/Usuarios.js"
+import Obra from "../models/Obras.js"
 import { crearTokenJWT } from "../middlewares/JWT.js"
 import { sendMailToCreateModerator } from "../helpers/sendMail.js"
 import {subirImagenCloudinary} from "../helpers/uploadCloudinary.js"
@@ -32,7 +33,7 @@ const perfilPublicoUsuario = async (req, res) => {
     const { id } = req.params;
 
     const usuario = await Usuarios.findById(id).select(
-      "nombres apellidos provincia username avatar email rol createdAt"
+      "nombres apellidos biografia fechaNacimiento provincia username avatar email rol createdAt redes"
     );
 
     if (!usuario) {
@@ -42,9 +43,23 @@ const perfilPublicoUsuario = async (req, res) => {
       });
     }
 
+    const obras = await Obra.find({
+      autor: usuario._id,
+      activo: true,
+      estado: {
+        $in: [
+          "EnVotacion",
+          "Ganadora",
+          "Publicada"
+        ]
+      }
+    }).select("_id titulo portada sinopsis estado fechaPublicacion createdAt")
+    .sort({ createdAt: -1 });
+
     res.status(200).json({
       ok: true,
-      usuario
+      usuario,
+      obras
     });
 
   } catch (error) {
@@ -69,7 +84,9 @@ const actualizarPerfil = async (req, res) => {
       provincia,
       username,
       email,
-      avatar
+      avatar,
+      biografia,
+      redes
     } = req.body || {}
 
     const usuarioBDD = await Usuarios.findById(id)
@@ -125,10 +142,7 @@ const actualizarPerfil = async (req, res) => {
         )
       }
 
-      const {
-        secure_url,
-        public_id
-      } = await subirImagenCloudinary(
+      const {secure_url,public_id} = await subirImagenCloudinary(
         req.files.avatar.tempFilePath,
         "Usuarios"
       )
@@ -137,11 +151,11 @@ const actualizarPerfil = async (req, res) => {
       usuarioBDD.avatarID = public_id
     }
 
-    usuarioBDD.nombres =
-      nombres ?? usuarioBDD.nombres
+    usuarioBDD.nombres = nombres ?? usuarioBDD.nombres
 
-    usuarioBDD.apellidos =
-      apellidos ?? usuarioBDD.apellidos
+    usuarioBDD.apellidos = apellidos ?? usuarioBDD.apellidos
+
+    usuarioBDD.biografia = biografia ?? usuarioBDD.biografia
 
     usuarioBDD.provincia =
       provincia ?? usuarioBDD.provincia
@@ -154,6 +168,13 @@ const actualizarPerfil = async (req, res) => {
 
     usuarioBDD.avatar =
       avatar ?? usuarioBDD.avatar
+
+      if (redes) {
+      usuarioBDD.redes = {
+        ...(usuarioBDD.redes || {}),
+        ...redes
+      };
+    }
 
     await usuarioBDD.save()
 

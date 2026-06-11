@@ -61,14 +61,39 @@ const UsuarioSchema = new Schema({
         default: "Usuario"
     },
     avatar: {
-   type: String,
-   default: null
+        type: String,
+        default: null
     },
     avatarID: {
     type: String,
     default: null
     },
-
+    redes: {
+    facebook: {
+        type: String,
+        default: ""
+    },
+    instagram: {
+        type: String,
+        default: ""
+    },
+    x: {
+        type: String,
+        default: ""
+    },
+    tiktok: {
+        type: String,
+        default: ""
+    },
+    youtube: {
+        type: String,
+        default: ""
+    },
+    web: {
+        type: String,
+        default: ""
+        }
+    },
     //Campo para registrar quien creó el moderador 
     creadoPor: {
     type: Schema.Types.ObjectId,

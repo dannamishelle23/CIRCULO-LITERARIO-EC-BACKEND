@@ -3,6 +3,7 @@ import {
   crearObra,
   obtenerObra,
   listarObrasClub,
+  listarObrasPublicasAutor,
   listarObrasEnRevision,
   listarObrasAprobadas,
   actualizarObra,
@@ -10,6 +11,7 @@ import {
   aprobarObra,
   rechazarObra,
   iniciarVotacion,
+  cerrarVotacion,
   listarMisObrasClub
 } from "../controllers/obras_controller.js";
 
@@ -62,6 +64,13 @@ router.get(
    OBTENER OBRA (preview o completa)
 ========================= */
 router.get("/:id",verificarTokenJWT,obtenerObra);
+
+//LISTAR OBRAS PUBLICAS DE UN AUTOR
+router.get(
+  "/autor/:autorId",
+  verificarTokenJWT,
+  listarObrasPublicasAutor
+);
 
 /* =========================
    ACTUALIZAR OBRA
@@ -117,6 +126,16 @@ router.post(
   verificarTokenJWT,
   verificarRol("Moderador"),
   iniciarVotacion
+);
+
+/* =========================
+   CERRAR VOTACIÓN (moderador)
+========================= */
+router.post(
+  "/club/:clubId/cerrar-votacion",
+  verificarTokenJWT,
+  verificarRol("Moderador"),
+  cerrarVotacion
 );
 
 export default router;

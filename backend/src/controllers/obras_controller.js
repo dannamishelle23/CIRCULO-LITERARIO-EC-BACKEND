@@ -89,9 +89,7 @@ export const crearObra = async (req, res) => {
   }
 };
 
-// =========================
 // OBTENER OBRA
-// =========================
 export const obtenerObra = async (req, res) => {
   try {
 
@@ -110,6 +108,21 @@ export const obtenerObra = async (req, res) => {
     if (!obra) {
       return res.status(404).json({
         msg: "Obra no encontrada."
+      });
+    }
+
+    const esAutor = obra.autor._id.toString() === req.usuarioHeader._id.toString();
+
+    const esVisible =
+      [
+        "Aprobada",
+        "EnVotacion",
+        "Publicada"
+      ].includes(obra.estado);
+
+    if (!esAutor && !esVisible) {
+      return res.status(403).json({
+        msg: "No tienes acceso a esta obra."
       });
     }
 
@@ -156,6 +169,50 @@ export const obtenerObra = async (req, res) => {
   }
 };
 
+/* LISTAR OBRAS DE UN AUTOR (LOS USUARIOS VERAN 
+SOLO HISTORIAS APROBADAS O PUBLICADAS DENTRO DEL PERFIL PUBLICO)*/
+export const listarObrasPublicasAutor = async (
+  req,
+  res
+) => {
+  try {
+
+    const { autorId } = req.params;
+
+    const obras = await Obra.find({
+      autor: autorId,
+      activo: true,
+      estado: {
+        $in: [
+          "Aprobada",
+          "Publicada"
+        ]
+      }
+    })
+    .populate(
+      "club",
+      "nombre generoLiterario"
+    )
+    .sort({
+      createdAt: -1
+    });
+
+    return res.status(200).json({
+      ok: true,
+      obras
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    return res.status(500).json({
+      msg: "Error al listar obras."
+    });
+
+  }
+};
+
 // =========================
 // LISTAR OBRAS DE UN CLUB
 // =========================
@@ -168,21 +225,11 @@ export const listarObrasClub = async (req, res) => {
       club: clubId,
       activo: true,
       estado: {
-        $in: [
-          "Aprobada",
-          "EnVotacion",
-          "Ganadora",
-          "Publicada"
-        ]
+        $in: ["EnVotacion","Publicada"]
       }
     })
-      .populate(
-        "autor",
-        "nombres apellidos username avatar"
-      )
-      .sort({
-        createdAt: -1
-      });
+      .populate("autor","nombres apellidos username avatar")
+      .sort({createdAt: -1});
 
     res.status(200).json({
       ok: true,
@@ -234,12 +281,25 @@ export const listarObrasAprobadas = async (req, res) => {
   try {
     const { clubId } = req.params;
 
+    const existeEnVotacion = await Obra.findOne({
+      club: clubId,
+      estado: "EnVotacion"
+    });
+
+    if (existeEnVotacion) {
+      return res.status(200).json({
+        ok: true,
+        bloqueado: true,
+        msg: "Ya hay una votación activa",
+        obras: []
+      });
+    }
+
     const obras = await Obra.find({
       club: clubId,
       activo: true,
       estado: "Aprobada"
-    })
-      .populate("autor", "nombres apellidos username avatar email")
+    }).populate("autor", "nombres apellidos username avatar email")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -359,10 +419,7 @@ export const postularObra = async (req, res) => {
       });
     }
 
-    if (
-      !["Borrador", "Rechazada"]
-      .includes(obra.estado)
-    ) {
+    if (!["Borrador"].includes(obra.estado)) {
       return res.status(400).json({
         msg:
           "La obra no puede volver a postularse."
@@ -512,7 +569,7 @@ export const rechazarObra = async (req, res) => {
       });
     }
 
-    obra.estado = "Rechazada";
+    obra.estado = "Borrador";
     obra.motivoRechazo = motivo || "Sin motivo";
     obra.rechazadoPor = req.usuarioHeader._id;
 
@@ -534,21 +591,24 @@ export const rechazarObra = async (req, res) => {
   }
 };
 
-// =========================
-// INICIAR VOTACIÓN
-// =========================
+// INICIAR VOTACIÓN POR CLUB
 export const iniciarVotacion = async (req, res) => {
   try {
 
-    const { id } = req.params;
+    const {clubId} = req.params;
+    const { obrasIds } = req.body;        //enviar array de obras aprobadas
 
-    const obra = await Obra.findById(id);
+    const club = await Club.findById(id);
 
-    if (!obra) {
+    if (!club) {
       return res.status(404).json({
-        msg: "Obra no encontrada."
+        msg: "Club no encontrada."
       });
     }
+
+    const esModerador = club.moderadores.some(
+      m => m.toString() === req.usuarioHeader._id.toString()
+    );
 
     if (obra.estado !== "Aprobada") {
       return res.status(400).json({
@@ -598,5 +658,77 @@ export const iniciarVotacion = async (req, res) => {
     res.status(500).json({
       msg: "Error al iniciar la votación."
     });
+  }
+};
+
+//CERRAR VOTACION
+export const cerrarVotacion = async (req, res) => {
+  try {
+
+    const { clubId } = req.params;
+
+    const obras = await Obra.find({
+      club: clubId,
+      estado: "EnVotacion"
+    });
+
+    if (!obras.length) {
+      return res.status(404).json({
+        msg: "No existen obras en votación."
+      });
+    }
+
+    const hoy = new Date();
+
+    if (hoy < obras[0].fechaFinVotacion) {
+      return res.status(400).json({
+        msg: "La votación aún no ha terminado."
+      });
+    }
+
+    let ganadora = obras[0];
+
+    for (const obra of obras) {
+      if ( obra.votos.length > ganadora.votos.length) {
+        ganadora = obra;
+      }
+    }
+
+    ganadora.estado = "Publicada";
+    ganadora.fechaPublicacion = new Date();
+    ganadora.fechaInicioVotacion = null;
+    ganadora.fechaFinVotacion = null;
+    ganadora.votos = [];
+
+    await ganadora.save();
+
+    await Obra.updateMany(
+      {
+        club: clubId,
+        estado: "EnVotacion",
+        _id: { $ne: ganadora._id }
+      },
+      {
+        estado: "Aprobada",
+        votos: [],
+        fechaInicioVotacion: null,
+        fechaFinVotacion: null
+      }
+    );
+
+    return res.status(200).json({
+      ok: true,
+      msg: "Votación cerrada.",
+      ganadora
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    return res.status(500).json({
+      msg: "Error al cerrar votación."
+    });
+
   }
 };

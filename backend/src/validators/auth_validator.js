@@ -102,7 +102,7 @@ export const validarRegistro = [
         .withMessage("Debe tener al menos una minúscula.")
         .matches(/[0-9]/)
         .withMessage("Debe tener al menos un número.")
-        .matches(/[@$!_%*?&]/)
+        .matches(/[@$!_%*-?&]/)
         .withMessage("Debe tener al menos un símbolo especial.")
 ]
 
