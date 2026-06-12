@@ -55,6 +55,7 @@ import ObraDetalle from "./pages/ObraDetalle"
 import ObrasVotacion from "./pages/usuario/ObrasVotacion"
 import ObraModeracion from "./pages/moderator/ObraModeracion"
 import ModerationPanel from "./pages/moderator/ModerationPanel"
+import Reviews from "./pages/usuario/Reviews"
 
 import PrivateRoute from "./components/PrivateRoute"
 import AdminRoute from "./components/AdminRoute"
@@ -156,6 +157,8 @@ function App() {
             />
 
             <Route path="/clubes/:id/leer-obra/:obraId" element={<LeerObra />} />
+
+            <Route path="/clubes/:clubId/reviews/:obraId" element={<Reviews />} />
 
             <Route path="/perfil" element={<Profile />} />
 
