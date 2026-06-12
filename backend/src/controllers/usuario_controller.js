@@ -48,9 +48,7 @@ const perfilPublicoUsuario = async (req, res) => {
       activo: true,
       estado: {
         $in: [
-          "EnVotacion",
-          "Ganadora",
-          "Publicada"
+          "Aprobada"
         ]
       }
     }).select("_id titulo portada sinopsis estado fechaPublicacion createdAt")

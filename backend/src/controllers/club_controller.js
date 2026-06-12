@@ -98,7 +98,7 @@ const listarClubes = async (req, res) => {
       .select("-createdAt -updatedAt -__v")
       .populate(
         "moderadores",
-        "nombres apellidos email estadoUsuario"
+        "nombres apellidos email estadoUsuario avatar"
       )
 
     if (clubes.length === 0) {
@@ -144,7 +144,7 @@ const detalleClub = async (req, res) => {
       .select("-createdAt -updatedAt -__v")
       .populate(
         "moderadores",
-        "nombres apellidos email estadoUsuario"
+        "nombres apellidos email estadoUsuario avatar"
       )
 
     // VALIDAR EXISTENCIA
@@ -284,7 +284,7 @@ const misClubesAsignados = async (
       )
       .populate(
         "moderadores",
-        "nombres apellidos email estadoUsuario"
+        "nombres apellidos email estadoUsuario avatar"
       )
 
     if (clubes.length === 0) {
@@ -341,7 +341,7 @@ const detalleMiClub = async (req, res) => {
       .select("-createdAt -updatedAt -__v")
       .populate(
         "moderadores",
-        "nombres apellidos email estadoUsuario"
+        "nombres apellidos email estadoUsuario avatar"
       )
 
     if (!club) {

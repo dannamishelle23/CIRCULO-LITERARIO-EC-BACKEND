@@ -22,7 +22,7 @@ export default function UserProfilePublic() {
   const navigate = useNavigate();
 
   const [usuario, setUsuario] = useState(null);
-  const [obras, setObras] = useState([])
+  const [obras, setObras] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,7 +32,10 @@ export default function UserProfilePublic() {
         const res = await getPerfilUsuario(id);
         console.log(res);
         setUsuario(res.usuario);
+        
+        // Como el backend ya filtra por estado y autor, simplemente guardamos las obras directamente
         setObras(res.obras || []);
+
       } catch (error) {
         console.error("Error cargando perfil:", error);
         setUsuario(null);
@@ -146,7 +149,7 @@ export default function UserProfilePublic() {
           {/* COLUMNA IZQUIERDA: INFORMACIÓN Y REDES */}
           <div className="space-y-6">
 
-              {usuario.biografia && (
+            {usuario.biografia && (
               <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-2xs">
                 <h3 className="text-[10px] font-black uppercase tracking-widest text-[#2c3e50] mb-3">
                   Biografía
@@ -179,7 +182,7 @@ export default function UserProfilePublic() {
                     </div>
                   </div>
 
-                  {/* NUEVO CAMPO: Fecha de Nacimiento / Cumpleaños */}
+                  {/* Fecha de Nacimiento */}
                   <div className="flex items-center gap-3">
                     <div className="w-7 h-7 bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center text-gray-400 shrink-0">
                       <MdCake size={13} className="text-slate-500" />
@@ -289,110 +292,107 @@ export default function UserProfilePublic() {
             </div>
           </div>
 
-        {/* COLUMNA DERECHA: PUBLICACIONES */}
-        <div className="lg:col-span-2 space-y-6">
+          {/* COLUMNA DERECHA: PUBLICACIONES */}
+          <div className="lg:col-span-2 space-y-6">
 
-        {(() => {
+            {(() => {
+              const esModerador = usuario?.rol?.toLowerCase() === "moderador";
 
-        const esModerador = usuario?.rol?.toLowerCase() === "moderador"
+              return (
+                <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-2xs min-h-[320px] flex flex-col">
 
-        return (
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-2xs min-h-[320px] flex flex-col">
+                  <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-6">
 
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-6">
+                    <h2 className="text-xs font-black uppercase tracking-widest text-[#2c3e50]">
+                      {esModerador
+                        ? "Actividad en la plataforma"
+                        : "Obras Publicadas"}
+                    </h2>
 
-              <h2 className="text-xs font-black uppercase tracking-widest text-[#2c3e50]">
-                {esModerador
-                  ? "Actividad en la plataforma"
-                  : "Obras Publicadas"}
-              </h2>
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider bg-gray-50 border border-gray-100 px-2 py-0.5 rounded">
+                      {esModerador
+                        ? "Moderador"
+                        : `${obras.length} publicaciones`}
+                    </span>
 
-              <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider bg-gray-50 border border-gray-100 px-2 py-0.5 rounded">
-                {esModerador
-                  ? "Moderador"
-                  : `${obras.length} publicaciones`}
-              </span>
+                  </div>
 
-            </div>
+                  {esModerador ? (
 
-            {esModerador ? (
+                    <div className="flex-1 flex flex-col items-center justify-center text-center max-w-sm mx-auto space-y-3 py-6">
 
-              <div className="flex-1 flex flex-col items-center justify-center text-center max-w-sm mx-auto space-y-3 py-6">
+                      <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center text-blue-400">
+                        <FaCheckCircle size={16} />
+                      </div>
 
-                <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center text-blue-400">
-                  <FaCheckCircle size={16} />
+                      <div className="space-y-1">
+                        <p className="text-xs font-black text-[#2c3e50] uppercase tracking-wide">
+                          Perfil de moderación
+                        </p>
+
+                        <p className="text-xs text-gray-400 font-medium leading-relaxed">
+                          Este usuario forma parte del equipo de moderación de la plataforma.
+                        </p>
+                      </div>
+
+                    </div>
+
+                  ) : obras.length === 0 ? (
+
+                    <div className="flex-1 flex flex-col items-center justify-center text-center max-w-sm mx-auto space-y-3 py-6">
+
+                      <div className="w-10 h-10 bg-gray-50 border border-gray-100 rounded-xl flex items-center justify-center text-gray-300">
+                        <FaBookOpen size={16} />
+                      </div>
+
+                      <div className="space-y-1">
+                        <p className="text-xs font-black text-[#2c3e50] uppercase tracking-wide">
+                          Sin publicaciones actuales
+                        </p>
+
+                        <p className="text-xs text-gray-400 font-medium leading-relaxed">
+                          Este autor no ha compartido obras aprobadas todavía.
+                        </p>
+                      </div>
+
+                    </div>
+
+                  ) : (
+
+                    <div className="grid grid-cols-1 gap-4">
+                      {obras.map((obra) => (
+                        <Link
+                          key={obra._id}
+                          to={`/obra/${obra._id}`}
+                          className="flex flex-col sm:flex-row gap-4 border border-gray-100 rounded-2xl p-4 bg-white hover:shadow-md transition items-center"
+                        >
+                          {obra.portada && (
+                            <div className="w-full sm:w-28 h-40 shrink-0 mx-auto sm:mx-0">
+                              <img 
+                                src={obra.portada}
+                                alt={obra.titulo}
+                                className="w-full h-full object-cover rounded-xl shadow-xs"
+                              />
+                            </div>
+                          )}
+
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <h3 className="text-sm font-black text-[#2c3e50] tracking-tight truncate">
+                              {obra.titulo}
+                            </h3>
+
+                            <p className="text-xs text-gray-500 font-medium leading-relaxed line-clamp-3">
+                              {obra.sinopsis}
+                            </p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+
+                  )}
+
                 </div>
-
-                <div className="space-y-1">
-                  <p className="text-xs font-black text-[#2c3e50] uppercase tracking-wide">
-                    Perfil de moderación
-                  </p>
-
-                  <p className="text-xs text-gray-400 font-medium leading-relaxed">
-                    Este usuario forma parte del equipo de moderación de la plataforma.
-                  </p>
-                </div>
-
-              </div>
-
-            ) : obras.length === 0 ? (
-
-              <div className="flex-1 flex flex-col items-center justify-center text-center max-w-sm mx-auto space-y-3 py-6">
-
-                <div className="w-10 h-10 bg-gray-50 border border-gray-100 rounded-xl flex items-center justify-center text-gray-300">
-                  <FaBookOpen size={16} />
-                </div>
-
-                <div className="space-y-1">
-                  <p className="text-xs font-black text-[#2c3e50] uppercase tracking-wide">
-                    Sin publicaciones actuales
-                  </p>
-
-                  <p className="text-xs text-gray-400 font-medium leading-relaxed">
-                    Este autor no ha compartido obras todavía.
-                  </p>
-                </div>
-
-              </div>
-
-            ) : (
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                {obras.map((obra) => (
-
-                  <Link
-                    key={obra._id}
-                    to={`/obra/${obra._id}`}
-                    className="block border border-gray-100 rounded-xl p-4 hover:shadow-sm transition"
-                  >
-                    {obra.portada && (
-                      <img 
-                        src={obra.portada}
-                        alt={obra.titulo}
-                        className="w-full h-40 object-cover"
-                      />
-                    )}
-
-                    <h3 className="text-sm font-black text-[#2c3e50] mb-2">
-                      {obra.titulo}
-                    </h3>
-
-                    <p className="text-xs text-gray-500 line-clamp-3">
-                      {obra.sinopsis}
-                    </p>
-
-                  </Link>
-
-                ))}
-
-              </div>
-
-            )}
-
-            </div>
-              )
-
+              );
             })()}
 
           </div>

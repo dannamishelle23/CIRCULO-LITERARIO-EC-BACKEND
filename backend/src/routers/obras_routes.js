@@ -13,6 +13,8 @@ import {
   iniciarVotacion,
   cerrarVotacion,
   listarMisObrasClub,
+  obtenerObrasVotacionClub,
+  obtenerObrasPublicadasClub,
   votarObra
 } from "../controllers/obras_controller.js";
 
@@ -91,7 +93,11 @@ router.post(
   cerrarVotacion
 );
 
+//VER OBRAS EN VOTACION Y PUBLICADAS (USUARIOS DEL CLUB)
+router.get("/obras-votacion/:clubId", verificarTokenJWT, verificarMiembroClub, obtenerObrasVotacionClub);
+router.get("/obras-publicadas/:clubId", verificarTokenJWT, verificarMiembroClub, obtenerObrasPublicadasClub);
+
 //VOTAR OBRA PARA LEER (USUARIOS DEL CLUB)
-router.post("/:id/votar",verificarTokenJWT,verificarMiembroClub,votarObra);
+router.post("/:id/votar",verificarTokenJWT,votarObra);
 
 export default router;

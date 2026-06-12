@@ -163,15 +163,22 @@ export const rechazarObra = async (id, motivo) => {
 | INICIAR VOTACIÓN (MODERADOR)
 ==========================================================================*/
 export const iniciarVotacion = async (clubId, obrasIds) => {
-  try {
-    const response = await api.post(
-      `/obras/club/${clubId}/iniciar-votacion`,
-      { obrasIds }
-    );
+  const url = `/obras/club/${clubId}/iniciar-votacion`;
 
+  console.log("URL FINAL:", url);
+  console.log("BODY:", obrasIds);
+
+  try {
+    const response = await api.post(url, { obrasIds });
     return response.data;
   } catch (error) {
-    console.error("Error iniciar votación:", error);
+    console.error("ERROR AXIOS:", error);
+
+    if (error.response) {
+      console.error("STATUS:", error.response.status);
+      console.error("DATA:", error.response.data);
+    }
+
     throw error;
   }
 };
@@ -201,6 +208,34 @@ export const votarObra = async (id) => {
     return response.data;
   } catch (error) {
     console.error("Error al votar obra:", error);
+    throw error;
+  }
+};
+
+/*==========================================================================
+| OBTENER OBRAS EN VOTACIÓN (USUARIOS DEL CLUB)
+==========================================================================*/
+export const obtenerObrasVotacionClub = async (clubId) => {
+  try {
+    // Ajusta la ruta si en tu backend la ruta es diferente (ej: `/obras/obras-votacion/${clubId}`)
+    const response = await api.get(`/obras/obras-votacion/${clubId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener obras en votación:", error);
+    throw error;
+  }
+};
+
+/*==========================================================================
+| OBTENER OBRAS PUBLICADAS (USUARIOS DEL CLUB)
+==========================================================================*/
+export const obtenerObrasPublicadasClub = async (clubId) => {
+  try {
+    // Ajusta la ruta según tu backend (ej: `/obras/obras-publicadas/${clubId}`)
+    const response = await api.get(`/obras/obras-publicadas/${clubId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener obras publicadas:", error);
     throw error;
   }
 };

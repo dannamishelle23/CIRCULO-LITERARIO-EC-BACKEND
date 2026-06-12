@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useParams, useNavigate } from "react-router-dom" // Asegúrate de que apunte a 'react-router-dom' si fue un typo de tipeo
+import { useParams, useNavigate } from "react-router-dom"
 import { getClubById, listarMiembrosClub } from "../../services/clubService"
 import { 
   FaArrowLeft, 
@@ -10,7 +10,8 @@ import {
   FaImage, 
   FaCloudUploadAlt,
   FaHourglassHalf,
-  FaPenNib
+  FaPenNib,
+  FaCheckCircle
 } from "react-icons/fa"
 
 import { listarMisObrasClub } from "../../services/obraService"
@@ -21,7 +22,7 @@ export default function ClubUsuarioDetail() {
 
   const [club, setClub] = useState(null)
   const [miembros, setMiembros] = useState([])
-  const [obras, setObras] = useState([]) // Estado unificado
+  const [obras, setObras] = useState([]) 
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -54,20 +55,32 @@ export default function ClubUsuarioDetail() {
     switch (estado) {
       case "Borrador":
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
-            <FaPenNib size={10} /> Borrador
+          <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100/70">
+            <FaPenNib size={9} /> Borrador
           </span>
         )
       case "EnRevision":
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100 animate-pulse">
-            <FaHourglassHalf size={10} /> En revisión
+          <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100/70 animate-pulse">
+            <FaHourglassHalf size={9} /> En revisión
+          </span>
+        )
+      case "EnVotacion":
+        return (
+          <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-purple-600 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100/70">
+            <FaBookOpen size={9} /> En Votación
+          </span>
+        )
+      case "Aprobada":
+        return (
+          <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100/70">
+            <FaCheckCircle size={9} /> Aprobada
           </span>
         )
       default:
         return (
-          <span className="inline-flex items-center text-[10px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
-            ✓ {estado}
+          <span className="inline-flex items-center text-[9px] font-black uppercase tracking-wider text-gray-600 bg-gray-50 px-2 py-0.5 rounded-md border border-gray-200">
+            {estado}
           </span>
         )
     }
@@ -196,7 +209,7 @@ export default function ClubUsuarioDetail() {
               </button>
             </div>
 
-            {/* LISTADO DE OBRAS CORREGIDO (Usa 'obras' en lugar de 'misObras') */}
+            {/* LISTADO DE OBRAS REDISEÑADO CON PORTADA Y SINOPSIS */}
             {obras.length > 0 && (
               <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-2xs space-y-4">
                 <div className="pb-2 border-b border-gray-100">
@@ -205,25 +218,49 @@ export default function ClubUsuarioDetail() {
                   </h2>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {obras.map((obra) => (
                     <div
                       key={obra._id}
-                      className="flex items-center justify-between p-4 bg-gray-50/50 border border-gray-100 rounded-xl hover:bg-gray-50 transition gap-4"
+                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-50/60 border border-gray-100 rounded-2xl hover:bg-gray-50 transition gap-4"
                     >
-                      <div className="space-y-1.5">
-                        <p className="text-sm font-black text-[#2c3e50] uppercase tracking-tight">
-                          {obra.titulo}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          {renderBadgeEstadoObra(obra.estado)}
+                      {/* Bloque Izquierdo: Portada + Detalles */}
+                      <div className="flex gap-4 items-start min-w-0 flex-1">
+                        
+                        {/* Mini Portada de la Obra */}
+                        <div className="w-14 sm:w-16 aspect-[3/4] bg-white border border-gray-200 rounded-xl overflow-hidden shrink-0 shadow-3xs flex items-center justify-center select-none">
+                          {obra.portada ? (
+                            <img 
+                              src={obra.portada} 
+                              alt={`Portada de ${obra.titulo}`} 
+                              className="w-full h-full object-cover" 
+                            />
+                          ) : (
+                            <FaBookOpen size={16} className="text-gray-300" />
+                          )}
+                        </div>
+
+                        {/* Textos de la Obra */}
+                        <div className="space-y-1.5 min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-xs font-black text-[#2c3e50] uppercase tracking-tight truncate max-w-[250px] sm:max-w-xs">
+                              {obra.titulo}
+                            </p>
+                            {renderBadgeEstadoObra(obra.estado)}
+                          </div>
+                          
+                          {/* Sinopsis de la Obra truncada */}
+                          <p className="text-[11px] font-medium text-gray-400 line-clamp-2 leading-relaxed pr-2">
+                            {obra.sinopsis || "Sin sinopsis registrada todavía en este manuscrito."}
+                          </p>
                         </div>
                       </div>
 
+                      {/* Botón de Acción Directa */}
                       <button
                         type="button"
                         onClick={() => navigate(`/mis-obras/${obra._id}`)}
-                        className="inline-flex items-center justify-center px-4 py-2 text-xs font-black uppercase tracking-wider bg-white border border-gray-200 text-[#2c3e50] hover:text-[#e67e22] hover:border-orange-200 rounded-xl shadow-3xs transition cursor-pointer active:scale-95 shrink-0"
+                        className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 text-xs font-black uppercase tracking-wider bg-white border border-gray-200 text-[#2c3e50] hover:text-[#e67e22] hover:border-orange-200 rounded-xl shadow-3xs transition cursor-pointer active:scale-95 shrink-0"
                       >
                         Continuar
                       </button>
@@ -238,7 +275,7 @@ export default function ClubUsuarioDetail() {
           {/* COLUMNA DERECHA: SIDEBAR (MODERADORES Y MIEMBROS) */}
           <div className="space-y-6">
             
-            {/* SECCIÓN MODERACIÓN */}
+            {/* SECCIÓN MODERACIÓN CON AJUSTE DE FALLBACK DE AVATAR */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-2xs">
               <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 text-[#2c3e50]">
                 <FaShieldAlt size={14} className="text-[#e67e22]" />
@@ -250,7 +287,14 @@ export default function ClubUsuarioDetail() {
               <div className="space-y-2.5">
                 {club.moderadores?.length > 0 ? (
                   club.moderadores.map((mod) => {
-                    const inicialMod = mod.nombres ? mod.nombres.charAt(0).toUpperCase() : "M";
+                    // AJUSTE CLAVE: Desestructuración y fallback dinámico por si viene plano o anidado en '.usuario'
+                    const fotoMod = mod.avatar || mod.usuario?.avatar;
+                    const nombreMod = mod.nombres || mod.usuario?.nombres;
+                    const apellidoMod = mod.apellidos || mod.usuario?.apellidos;
+                    const emailMod = mod.email || mod.usuario?.email;
+                    
+                    const inicialMod = nombreMod ? nombreMod.charAt(0).toUpperCase() : "M";
+                    const idParaPerfil = mod.usuario?._id || mod._id;
 
                     return (
                       <div
@@ -259,10 +303,10 @@ export default function ClubUsuarioDetail() {
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-100 text-[#e67e22] font-black text-xs flex items-center justify-center select-none shrink-0 overflow-hidden">
-                            {mod.avatar ? (
+                            {fotoMod ? (
                               <img 
-                                src={mod.avatar} 
-                                alt="Avatar Moderador" 
+                                src={fotoMod} 
+                                alt={`Avatar de ${nombreMod}`} 
                                 className="w-full h-full object-cover" 
                               />
                             ) : (
@@ -272,19 +316,19 @@ export default function ClubUsuarioDetail() {
 
                           <div className="min-w-0">
                             <p className="text-xs font-black text-[#2c3e50] uppercase tracking-tight truncate">
-                              {mod.nombres} {mod.apellidos}
+                              {nombreMod} {apellidoMod}
                             </p>
                             <p className="text-[11px] font-medium text-gray-400 mt-0.5 lowercase truncate">
-                              {mod.email || "moderador@circulo.ec"}
+                              {emailMod || "moderador@circulo.ec"}
                             </p>
                           </div>
                         </div>
 
                         <button
                           type="button"
-                          onClick={() => navigate(`/perfil/${mod._id}`)}
+                          onClick={() => navigate(`/perfil/${idParaPerfil}`)}
                           className="p-2 text-slate-400 hover:text-[#e67e22] hover:bg-amber-50 rounded-lg transition shrink-0 cursor-pointer active:scale-90"
-                          title={`Ver perfil de ${mod.nombres}`}
+                          title={`Ver perfil de ${nombreMod}`}
                         >
                           <FaEye size={14} />
                         </button>
@@ -304,16 +348,19 @@ export default function ClubUsuarioDetail() {
               <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 text-[#2c3e50]">
                 <FaUsers size={14} className="text-[#e67e22]" />
                 <h2 className="text-xs font-black uppercase tracking-widest">
-                  Comunidad Activa ({miembros.length})
+                  Miembros activos en el Club ({miembros.length})
                 </h2>
               </div>
               
               {miembros.length > 0 ? (
-                <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1 scrollbar-thin">
                   {miembros.map((m) => {
-                    const u = m.usuario;
+                    const u = m.usuario || m;
                     if (!u) return null;
+                    
+                    const fotoLector = u.avatar;
                     const inicialUser = u.nombres ? u.nombres.charAt(0).toUpperCase() : "L";
+                    const idLector = u._id || m._id;
 
                     return (
                       <div 
@@ -322,8 +369,8 @@ export default function ClubUsuarioDetail() {
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="w-8 h-8 rounded-lg bg-slate-100 text-[#2c3e50] font-black text-xs flex items-center justify-center border border-gray-200 select-none shrink-0 overflow-hidden">
-                            {u.avatar ? (
-                              <img src={u.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                            {fotoLector ? (
+                              <img src={fotoLector} alt="Avatar" className="w-full h-full object-cover" />
                             ) : (
                               inicialUser
                             )}
@@ -341,7 +388,7 @@ export default function ClubUsuarioDetail() {
 
                         <button
                           type="button"
-                          onClick={() => navigate(`/perfil/${u._id}`)}
+                          onClick={() => navigate(`/perfil/${idLector}`)}
                           className="p-2 text-slate-400 hover:text-[#e67e22] hover:bg-amber-50 rounded-lg transition shrink-0 cursor-pointer active:scale-90"
                           title={`Ver perfil de ${u.nombres}`}
                         >

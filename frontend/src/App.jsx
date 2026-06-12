@@ -49,8 +49,10 @@ import Menu from "./pages/Menu"
 import ObrasMenu from "./pages/ObrasMenu"
 import CrearObra from "./pages/obras/CrearObra"
 import MisObras from "./pages/MisObras"
+import LeerObra from "./pages/LeerObra"
 import MiObraDetail from "./pages/usuario/MiObraDetail"
 import ObraDetalle from "./pages/ObraDetalle"
+import ObrasVotacion from "./pages/usuario/ObrasVotacion"
 import ObraModeracion from "./pages/moderator/ObraModeracion"
 import ModerationPanel from "./pages/moderator/ModerationPanel"
 
@@ -129,6 +131,8 @@ function App() {
 
             <Route path="/club-usuario/:id" element={<ClubUsuarioDetail />} />
 
+            <Route path="/obras-votacion/:id" element={<ObrasVotacion />} />
+
             <Route path="/obras" element={<ObrasMenu />} />
 
             <Route
@@ -150,6 +154,8 @@ function App() {
               path="/obra/:id"
               element={<ObraDetalle />}
             />
+
+            <Route path="/clubes/:id/leer-obra/:obraId" element={<LeerObra />} />
 
             <Route path="/perfil" element={<Profile />} />
 

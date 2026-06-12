@@ -82,6 +82,7 @@ export default function ObraForm({ clubId, onSubmit, editingObra, onCancel, isLo
     e.preventDefault();
     setError("");
 
+    // Mantenemos la validación estricta del prólogo porque SÍ es obligatorio
     if (!form.titulo.trim() || !form.sinopsis.trim() || !form.prologo.trim() || !form.club) {
       setError("Título, sinopsis, prólogo y club son obligatorios");
       return;
@@ -155,12 +156,10 @@ export default function ObraForm({ clubId, onSubmit, editingObra, onCancel, isLo
               Club *
             </label>
             {clubId ? (
-              // Mostrar club de forma estática cuando viene por parámetro
               <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-blue-50 text-[#2c3e50] font-semibold">
                 {nombreClub || "Cargando club..."}
               </div>
             ) : (
-              // Mostrar selector cuando no viene clubId
               <select
                 name="club"
                 value={form.club}
@@ -182,7 +181,6 @@ export default function ObraForm({ clubId, onSubmit, editingObra, onCancel, isLo
 
         {/* LADO DERECHO - PORTADA */}
         <div className="flex flex-col gap-4">
-          {/* VISTA PREVIA PORTADA */}
           <div className="bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 p-4 flex items-center justify-center min-h-[200px]">
             {portadaPreview ? (
               <img
@@ -198,7 +196,6 @@ export default function ObraForm({ clubId, onSubmit, editingObra, onCancel, isLo
             )}
           </div>
 
-          {/* INPUT PORTADA */}
           <label className="cursor-pointer">
             <div className="bg-[#e67e22] hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg text-center transition">
               Seleccionar portada
@@ -213,10 +210,10 @@ export default function ObraForm({ clubId, onSubmit, editingObra, onCancel, isLo
         </div>
       </div>
 
-      {/* PROLOGO - CAMPO ADICIONAL */}
+      {/* PRÓLOGO - CAMBIO AQUÍ: Ahora dice Prólogo * para denotar obligatoriedad */}
       <div className="mt-4">
         <label className="block text-sm font-bold text-[#2c3e50] mb-2">
-          Prólogo (opcional)
+          Prólogo *
         </label>
         <textarea
           name="prologo"
@@ -248,5 +245,5 @@ export default function ObraForm({ clubId, onSubmit, editingObra, onCancel, isLo
         </button>
       </div>
     </form>
-  )
+  );
 }

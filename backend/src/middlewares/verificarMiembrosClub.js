@@ -3,8 +3,9 @@ import Clubes from "../models/Clubes.js";
 
 const verificarMiembroClub = async (req, res, next) => {
   try {
-
     const usuarioId = req.usuarioHeader._id;
+    
+    // Obtenemos el clubId normalmente de los parámetros o el body
     const clubId = req.params.clubId || req.body.club || req.body.clubId;
 
     if (!clubId) {
@@ -40,9 +41,10 @@ const verificarMiembroClub = async (req, res, next) => {
     next();
 
   } catch (error) {
+    console.error("CRASH EN VERIFICAR MIEMBRO", error);
     return res.status(500).json({
       msg: "Error verificando club",
-      error
+      error: error
     });
   }
 };

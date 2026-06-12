@@ -101,15 +101,29 @@ export default function ManageUsers() {
             ) : (
               data.map((user) => {
                 const esSuspendido = user.estadoUsuario === "Suspendido";
+                
+                // AJUSTE CLAVE: Validación doble por si la propiedad viene directa o anidada
+                const fotoPerfil = user.avatar || user.usuario?.avatar;
                 const inicial = user.nombres ? user.nombres.charAt(0).toUpperCase() : "U";
 
                 return (
                   <tr key={user._id} className="hover:bg-slate-50/50 transition">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-slate-100 text-[#2c3e50] font-bold text-xs flex items-center justify-center border border-gray-200 select-none">
-                          {inicial}
+                        
+                        {/* CONTENEDOR DE AVATAR DINÁMICO */}
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 text-[#2c3e50] font-bold text-xs flex items-center justify-center border border-gray-200 select-none overflow-hidden shrink-0">
+                          {fotoPerfil ? (
+                            <img 
+                              src={fotoPerfil} 
+                              alt={`Avatar de ${user.nombres}`} 
+                              className="w-full h-full object-cover" 
+                            />
+                          ) : (
+                            inicial
+                          )}
                         </div>
+
                         <span className="text-sm font-bold text-[#2c3e50] capitalize">
                           {user.nombres} {user.apellidos}
                         </span>

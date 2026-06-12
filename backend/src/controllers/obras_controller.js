@@ -193,6 +193,7 @@ export const listarObrasClub = async (req, res) => {
 
     const obras = await Obra.find({
       club: clubId,
+      estado: {$in: ["EnRevision", "Aprobada"]},
       activo: true
     })
       .populate("autor", "nombres apellidos username avatar")
@@ -217,7 +218,7 @@ export const listarObrasEnRevision = async (req, res) => {
       club: clubId,
       estado: "EnRevision",
       activo: true
-    });
+    }).populate("autor", "nombres apellidos username avatar portada");
 
     res.status(200).json({ ok: true, obras });
 
@@ -238,7 +239,7 @@ export const listarObrasAprobadas = async (req, res) => {
       club: clubId,
       estado: "Aprobada",
       activo: true
-    });
+    }).populate("autor", "nombres apellidos username avatar portada");
 
     res.status(200).json({ ok: true, obras });
 
@@ -393,7 +394,7 @@ export const rechazarObra = async (req, res) => {
       return res.status(403).json({ msg: "No autorizado." });
     }
 
-    obra.estado = "Rechazada";
+    obra.estado = "Borrador";
     obra.motivoRechazo = motivo || "Sin motivo";
 
     await obra.save();
@@ -527,6 +528,11 @@ export const cerrarVotacion = async (req, res) => {
 export const votarObra = async (req, res) => {
   try {
     const { id } = req.params;
+    
+    if (!req.usuarioHeader || !req.usuarioHeader._id) {
+      return res.status(401).json({ msg: "No autorizado. Inicia sesión nuevamente." });
+    }
+    
     const userId = req.usuarioHeader._id;
 
     const obra = await Obra.findById(id);
@@ -538,13 +544,13 @@ export const votarObra = async (req, res) => {
       return res.status(400).json({ msg: "La obra no está en votación." });
     }
 
-    // validar tiempo (1 semana)
+    // Validar tiempo (1 semana)
     const ahora = new Date();
     if (obra.fechaFinVotacion && ahora > obra.fechaFinVotacion) {
       return res.status(400).json({ msg: "La votación ya terminó." });
     }
 
-    // validar membresía del club
+    // Validar membresía del club
     const miembro = await ClubMiembros.findOne({
       club: obra.club,
       usuario: userId,
@@ -552,28 +558,50 @@ export const votarObra = async (req, res) => {
     });
 
     if (!miembro) {
-      return res.status(403).json({ msg: "No eres miembro del club." });
+      return res.status(403).json({ msg: "No eres miembro aprobado del club." });
     }
 
-    // verificar si ya votó
-    const yaVoto = obra.votos.some(v => v.usuario.toString() === userId.toString());
+    // Buscar todas las obras en votación de este mismo club
+    const obrasEnVotacion = await Obra.find({ 
+      club: obra.club, 
+      estado: "EnVotacion" 
+    });
 
-    if (yaVoto) {
-      // QUITAR VOTO
-      obra.votos = obra.votos.filter(
-        v => v.usuario.toString() !== userId.toString()
-      );
+    // Encontrar si el usuario ya votó por ALGUNA obra en esta ronda
+    let obraConVotoAnterior = null;
+    for (const otraObra of obrasEnVotacion) {
+      const voto = otraObra.votos.find(v => v.usuario && v.usuario.toString() === userId.toString());
+      if (voto) {
+        obraConVotoAnterior = otraObra;
+        break;
+      }
+    }
 
+    // CASO 1: El usuario ya votó por ESTA MISMA obra -> Se le quita el voto (Eliminar voto)
+    if (obraConVotoAnterior && obraConVotoAnterior._id.toString() === obra._id.toString()) {
+      obra.votos = obra.votos.filter(v => v.usuario && v.usuario.toString() !== userId.toString());
       await obra.save();
-
-      return res.status(200).json({
-        ok: true,
-        msg: "Voto eliminado",
-        votos: obra.votos.length
+      return res.status(200).json({ 
+        ok: true, 
+        msg: "Voto eliminado", 
+        accion: "quitar", 
+        votos: obra.votos.length 
       });
     }
 
-    // AGREGAR VOTO
+    // CASO 2: El usuario ya votó por OTRA obra -> RECHAZAR. Obligar a quitar el voto primero.
+    if (obraConVotoAnterior) {
+      return res.status(400).json({ 
+        msg: "Ya has emitido un voto en esta ronda. Primero debes eliminar tu voto actual para poder apoyar otra obra." 
+      });
+    }
+
+    // Inicializar votos si es null/undefined
+    if (!obra.votos) {
+      obra.votos = [];
+    }
+
+    // Agregar voto a la obra actual
     obra.votos.push({
       usuario: userId,
       fecha: new Date()
@@ -584,11 +612,95 @@ export const votarObra = async (req, res) => {
     return res.status(200).json({
       ok: true,
       msg: "Voto registrado",
+      accion: "poner",
       votos: obra.votos.length
     });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ msg: "Error al votar." });
+    console.error("ERROR DETALLADO EN VOTAR OBRA: ", error);
+    return res.status(500).json({ msg: "Error interno al procesar el voto." });
+  }
+};
+
+//OBTENER OBRAS EN VOTACIÓN (LOS USUARIOS DEL CLUB PODRAN VER Y DECIDIR POR CUAL VOTAR)
+export const obtenerObrasVotacionClub = async (req, res) => {
+  try {
+    const { clubId } = req.params;
+    const userId = req.usuarioHeader._id;
+
+    // 1. NUEVA VALIDACIÓN: Verificar si hay una lectura actualmente publicada (en curso)
+    const lecturaPublicada = await Obra.findOne({
+      club: clubId,
+      estado: "Publicada",
+      activo: true
+    });
+
+    if (lecturaPublicada) {
+      return res.status(400).json({ 
+        msg: "Ya hay una obra publicada. La votación se abrirá al finalizar la lectura actual." 
+      });
+    }
+
+    // 2. Si no hay lectura publicada, procedemos a buscar las obras en votación
+    const obras = await Obra.find({
+      club: clubId,
+      estado: "EnVotacion",
+      activo: true
+    }).populate("autor", "nombres apellidos username avatar");
+
+    if (!obras || obras.length === 0) {
+      return res.status(404).json({ msg: "No existen obras en estado de votación actualmente." });
+    }
+
+    // El mapeo se mantiene igual...
+    const obrasConVotacion = obras.map(obra => ({
+      _id: obra._id,
+      titulo: obra.titulo,
+      sinopsis: obra.sinopsis,
+      prologo: obra.prologo,
+      autor: obra.autor ? `${obra.autor.nombres} ${obra.autor.apellidos}` : "Desconocido",
+      autorAvatar: obra.autor?.avatar || null,
+      portada: obra.portada,
+      votos: obra.votos.length,
+      yaVotado: obra.votos.some(v => v.usuario.toString() === userId.toString()),
+      estado: obra.estado
+    }));
+
+    res.status(200).json(obrasConVotacion);
+
+  } catch (error) {
+    console.error("Error al obtener obras en votación:", error);
+    res.status(500).json({ msg: "Error al obtener obras en votación." });
+  }
+};
+
+export const obtenerObrasPublicadasClub = async (req, res) => {
+  try {
+    const { clubId } = req.params;
+
+    const obras = await Obra.find({
+      club: clubId,
+      estado: "Publicada",
+      activo: true
+    }).populate("autor", "nombres apellidos username avatar");
+
+    if (!obras || obras.length === 0) {
+      return res.status(404).json({ msg: "No hay lecturas publicadas todavía." });
+    }
+    const obrasPublicadas = obras.map(obra => ({
+      _id: obra._id,
+      portada: obra.portada,
+      titulo: obra.titulo,
+      sinopsis: obra.sinopsis,
+      prologo: obra.prologo,
+      autor: obra.autor ? `${obra.autor.nombres} ${obra.autor.apellidos}` : "Desconocido",
+      autorAvatar: obra.autor?.avatar || null,
+    }));
+
+    res.status(200).json(obrasPublicadas);
+
+  } catch (error) {
+    console.error("Error al obtener obras publicadas:", error);
+    res.status(500).json({ msg: "Error al obtener obras publicadas." });
   }
 };
