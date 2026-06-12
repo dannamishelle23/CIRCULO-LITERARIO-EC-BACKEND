@@ -11,6 +11,7 @@ import routerClubes from './routers/club_routes.js'
 import routerClubMiembros from './routers/clubMiembros_routes.js'
 import routerObras from './routers/obras_routes.js'
 import routerCapitulos from './routers/capitulos_routes.js'
+import routerComentarios from './routers/comentarios_routes.js'
 
 // Inicializaciones
 const app = express()
@@ -55,6 +56,9 @@ app.use('/api/obras', routerObras)
 
 // Rutas para capítulos de obras
 app.use('/api/capitulos', routerCapitulos)
+
+// Rutas para comentarios de obras
+app.use('/api/comentarios', routerComentarios)
 
 // Manejo de una ruta que no sea encontrada
 app.use((req,res) => res.status(404).send("Error 404: Endpoint no encontrado."))
