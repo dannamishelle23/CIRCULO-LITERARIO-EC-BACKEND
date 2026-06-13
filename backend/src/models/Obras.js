@@ -40,6 +40,12 @@ const ObraSchema = new Schema(
       required: true,
     },
 
+    subgenero: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+
     estado: {
       type: String,
       enum: [

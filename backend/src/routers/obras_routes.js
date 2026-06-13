@@ -28,10 +28,14 @@ const router = Router();
 //CREAR OBRA (usuario lector o autor dentro del club)
 router.post("/",verificarTokenJWT,crearObra);
 
+//VER OBRAS EN VOTACION Y PUBLICADAS (USUARIOS DEL CLUB)
+router.get("/obras-votacion/:clubId", verificarTokenJWT, verificarMiembroClub, obtenerObrasVotacionClub);
+router.get("/obras-publicadas/:clubId", verificarTokenJWT, verificarMiembroClub, obtenerObrasPublicadasClub);
+
 //LISTAR OBRAS PUBLICAS DE UN AUTOR (SE CONSULTA DESDE EL PERFIL PUBLICO DE CADA AUTOR)
 router.get("/autor/:autorId",verificarTokenJWT,listarObrasPublicasAutor);
 
-//OBTENER OBRA
+//OBTENER OBRA (MODERADOR)
 router.get("/:id",verificarTokenJWT,obtenerObra);
 
 //ACTUALIZAR OBRA (SOLO TITULO, PORTADA, SINOPSIS Y PROLOGO)
@@ -92,10 +96,6 @@ router.post(
   verificarRol("Moderador"),
   cerrarVotacion
 );
-
-//VER OBRAS EN VOTACION Y PUBLICADAS (USUARIOS DEL CLUB)
-router.get("/obras-votacion/:clubId", verificarTokenJWT, verificarMiembroClub, obtenerObrasVotacionClub);
-router.get("/obras-publicadas/:clubId", verificarTokenJWT, verificarMiembroClub, obtenerObrasPublicadasClub);
 
 //VOTAR OBRA PARA LEER (USUARIOS DEL CLUB)
 router.post("/:id/votar",verificarTokenJWT,votarObra);

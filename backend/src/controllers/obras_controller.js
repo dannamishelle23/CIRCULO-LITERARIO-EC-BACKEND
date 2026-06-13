@@ -2,14 +2,17 @@ import Obra from "../models/Obras.js";
 import Capitulo from "../models/Capitulos.js";
 import Club from "../models/Clubes.js";
 import ClubMiembros from "../models/ClubMiembros.js";
-import { subirImagenCloudinary } from "../helpers/uploadCloudinary.js";
+import {
+  subirImagenCloudinary,
+  eliminarImagenCloudinary,
+} from "../helpers/uploadCloudinary.js";
 
 /* =========================
    CREAR OBRA
 ========================= */
 export const crearObra = async (req, res) => {
   try {
-    const { titulo, sinopsis, prologo, club } = req.body;
+    const { titulo, sinopsis, prologo, club, subgenero } = req.body;
 
     if (!titulo || !sinopsis || !prologo || !club) {
       return res.status(400).json({ msg: "Todos los campos son obligatorios." });
@@ -47,7 +50,8 @@ export const crearObra = async (req, res) => {
       portada: secure_url,
       portadaID: public_id,
       autor: req.usuarioHeader._id,
-      club
+      club,
+      subgenero: subgenero || null,
     });
 
     await obra.save();
@@ -88,12 +92,14 @@ export const obtenerObra = async (req, res) => {
       sinopsis: obra.sinopsis,
       prologo: obra.prologo,
       portada: obra.portada,
+      subgenero: obra.subgenero,
       estado: obra.estado,
       autor: obra.autor,
       club: obra.club,
       votos: obra.votos.length,
       fechaInicioVotacion: obra.fechaInicioVotacion,
       fechaFinVotacion: obra.fechaFinVotacion,
+      fechaPublicacion: obra.fechaPublicacion,
       motivoRechazo: obra.motivoRechazo
     };
 
@@ -134,7 +140,22 @@ export const actualizarObra = async (req, res) => {
       });
     }
 
-    const cambios = req.body;
+    const cambios = { ...req.body };
+
+    // Si envían nueva portada, subirla y reemplazar la anterior
+    if (req.files?.portada) {
+      const { secure_url, public_id } = await subirImagenCloudinary(
+        req.files.portada.tempFilePath,
+        "obras"
+      );
+
+      cambios.portada = secure_url;
+      cambios.portadaID = public_id;
+
+      if (obra.portadaID) {
+        await eliminarImagenCloudinary(obra.portadaID);
+      }
+    }
 
     // bloquear campos críticos
     delete cambios.estado;
@@ -170,7 +191,7 @@ export const listarObrasPublicasAutor = async (req, res) => {
 
     const obras = await Obra.find({
       autor: autorId,
-      estado: "Aprobada",
+      estado: { $in: ["Aprobada", "Publicada"] },
       activo: true
     })
       .populate("club", "nombre generoLiterario")
@@ -287,6 +308,11 @@ export const postularObra = async (req, res) => {
 
     if (obra.autor.toString() !== req.usuarioHeader._id.toString()) {
       return res.status(403).json({ msg: "No eres el autor." });
+    }
+
+    // Requerir subgénero antes de postular
+    if (!obra.subgenero || typeof obra.subgenero !== 'string' || !obra.subgenero.trim()) {
+      return res.status(400).json({ msg: "Debes registrar un subgénero antes de postular la obra." });
     }
 
     const totalCapitulos = await Capitulo.countDocuments({
@@ -516,9 +542,7 @@ export const cerrarVotacion = async (req, res) => {
         votos: []
       }
     );
-
     res.status(200).json({ ok: true, ganadora });
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ msg: "Error en el servidor." });
@@ -637,6 +661,7 @@ export const obtenerObrasVotacionClub = async (req, res) => {
 
     if (lecturaPublicada) {
       return res.status(400).json({ 
+        votacionCerrada: true,
         msg: "Ya hay una obra publicada. La votación se abrirá al finalizar la lectura actual." 
       });
     }
@@ -695,10 +720,10 @@ export const obtenerObrasPublicadasClub = async (req, res) => {
       prologo: obra.prologo,
       autor: obra.autor ? `${obra.autor.nombres} ${obra.autor.apellidos}` : "Desconocido",
       autorAvatar: obra.autor?.avatar || null,
+      fechaPublicacion: new Date()
     }));
 
     res.status(200).json(obrasPublicadas);
-
   } catch (error) {
     console.error("Error al obtener obras publicadas:", error);
     res.status(500).json({ msg: "Error al obtener obras publicadas." });
