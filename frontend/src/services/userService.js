@@ -129,7 +129,7 @@ export const updateProfile = async (id, formData) => {
         },
       }
     );
-    return response.data; // Retorna { msg, usuario } enviado por tu backend
+    return response.data; 
   } catch (error) {
     console.error("Error en updateProfile service:", error);
     throw error;

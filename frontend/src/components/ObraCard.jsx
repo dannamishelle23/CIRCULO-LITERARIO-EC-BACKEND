@@ -51,6 +51,11 @@ export default function ObraCard({ obra, onDelete, onEdit }) {
           {obra.sinopsis || obra.descripcion}
         </p>
 
+        {/* SUBGÉNERO */}
+        {obra.subgenero && (
+          <p className="text-xs text-gray-500 mb-3">Subgénero: <strong className="text-gray-700">{obra.subgenero}</strong></p>
+        )}
+
         {/* AUTOR */}
         {obra.autor && (
           <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-200 text-xs">

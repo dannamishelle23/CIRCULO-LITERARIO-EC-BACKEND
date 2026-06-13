@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { getPerfilUsuario } from "../services/userService";
+import { listarObrasPublicasAutor } from "../services/obraService";
 import { 
   FaArrowLeft, 
   FaEnvelope, 
@@ -24,6 +25,7 @@ export default function UserProfilePublic() {
   const [usuario, setUsuario] = useState(null);
   const [obras, setObras] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [obraModal, setObraModal] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -36,6 +38,22 @@ export default function UserProfilePublic() {
         // Como el backend ya filtra por estado y autor, simplemente guardamos las obras directamente
         setObras(res.obras || []);
 
+        // Obtener obras aprobadas que devuelve el endpoint y además
+        // las obras publicadas por el autor para no ocultar lecturas ya publicadas
+        const obrasAutor = res.obras || [];
+        try {
+          const publicadasRes = await listarObrasPublicasAutor(id);
+          const obrasPublicadas = Array.isArray(publicadasRes) ? publicadasRes : (publicadasRes.obras || []);
+
+          // Unir sin duplicados (por _id)
+          const mapa = new Map();
+          [...obrasAutor, ...obrasPublicadas].forEach(o => mapa.set(o._id, o));
+          setObras(Array.from(mapa.values()));
+        } catch (errorPublicadas) {
+          console.warn("Error cargando obras publicadas:", errorPublicadas);
+          // Si falla la llamada adicional, usamos lo que llegó en el perfil
+          setObras(obrasAutor);
+        }
       } catch (error) {
         console.error("Error cargando perfil:", error);
         setUsuario(null);
@@ -89,6 +107,7 @@ export default function UserProfilePublic() {
 
   const inicial = usuario.nombres ? usuario.nombres.charAt(0).toUpperCase() : "U";
   const tieneRedes = usuario.redes && Object.values(usuario.redes).some(valor => valor);
+  const esModerador = usuario?.rol?.toLowerCase() === "moderador";
 
   return (
     <section className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans sm:px-6">
@@ -123,14 +142,7 @@ export default function UserProfilePublic() {
 
             {/* Datos Principales */}
             <div className="flex-1 min-w-0 space-y-1.5 pt-1">
-              <div className="flex flex-wrap gap-2 items-center">
-                <span className="text-[9px] font-black bg-emerald-50 border border-emerald-100 text-emerald-600 px-2 py-0.5 rounded uppercase tracking-wider inline-flex items-center gap-1">
-                  <FaCheckCircle size={9} /> Activo
-                </span>
-                <span className="text-[9px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded tracking-wide">
-                  @{usuario.username}
-                </span>
-              </div>
+              {/* username and status moved to left column; header simplified */}
               
               <h1 className="text-xl sm:text-2xl font-black text-[#2c3e50] uppercase tracking-tight truncate">
                 {usuario.nombres} {usuario.apellidos}
@@ -289,111 +301,148 @@ export default function UserProfilePublic() {
                 </div>
               )}
 
+            {/* Cuenta pública: username y estado (columna izquierda) */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-2xs">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Cuenta pública</h3>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] text-gray-400 uppercase">Usuario</p>
+                  <p className="text-sm font-black text-[#2c3e50]">@{usuario.username}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] text-gray-400 uppercase">Estado</p>
+                  <p className="text-sm font-black text-emerald-700">{usuario.estado || 'Activo'}</p>
+                </div>
+              </div>
+            </div>
+
             </div>
           </div>
+
+          {/* (removed duplicate public info block — biography shown in left column) */}
 
           {/* COLUMNA DERECHA: PUBLICACIONES */}
           <div className="lg:col-span-2 space-y-6">
 
-            {(() => {
-              const esModerador = usuario?.rol?.toLowerCase() === "moderador";
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-2xs min-h-[320px] flex flex-col">
 
-              return (
-                <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-2xs min-h-[320px] flex flex-col">
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-6">
 
-                  <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-6">
+                <h2 className="text-xs font-black uppercase tracking-widest text-[#2c3e50]">
+                  {esModerador ? "Actividad en la plataforma" : "Obras Publicadas"}
+                </h2>
 
-                    <h2 className="text-xs font-black uppercase tracking-widest text-[#2c3e50]">
-                      {esModerador
-                        ? "Actividad en la plataforma"
-                        : "Obras Publicadas"}
-                    </h2>
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider bg-gray-50 border border-gray-100 px-2 py-0.5 rounded">
+                  {esModerador ? "Moderador" : `${obras.length} publicaciones`}
+                </span>
 
-                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider bg-gray-50 border border-gray-100 px-2 py-0.5 rounded">
-                      {esModerador
-                        ? "Moderador"
-                        : `${obras.length} publicaciones`}
-                    </span>
+              </div>
 
+              {esModerador ? (
+
+                <div className="flex-1 flex flex-col items-center justify-center text-center max-w-sm mx-auto space-y-3 py-6">
+
+                  <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center text-blue-400">
+                    <FaCheckCircle size={16} />
                   </div>
 
-                  {esModerador ? (
-
-                    <div className="flex-1 flex flex-col items-center justify-center text-center max-w-sm mx-auto space-y-3 py-6">
-
-                      <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center text-blue-400">
-                        <FaCheckCircle size={16} />
-                      </div>
-
-                      <div className="space-y-1">
-                        <p className="text-xs font-black text-[#2c3e50] uppercase tracking-wide">
-                          Perfil de moderación
-                        </p>
-
-                        <p className="text-xs text-gray-400 font-medium leading-relaxed">
-                          Este usuario forma parte del equipo de moderación de la plataforma.
-                        </p>
-                      </div>
-
-                    </div>
-
-                  ) : obras.length === 0 ? (
-
-                    <div className="flex-1 flex flex-col items-center justify-center text-center max-w-sm mx-auto space-y-3 py-6">
-
-                      <div className="w-10 h-10 bg-gray-50 border border-gray-100 rounded-xl flex items-center justify-center text-gray-300">
-                        <FaBookOpen size={16} />
-                      </div>
-
-                      <div className="space-y-1">
-                        <p className="text-xs font-black text-[#2c3e50] uppercase tracking-wide">
-                          Sin publicaciones actuales
-                        </p>
-
-                        <p className="text-xs text-gray-400 font-medium leading-relaxed">
-                          Este autor no ha compartido obras aprobadas todavía.
-                        </p>
-                      </div>
-
-                    </div>
-
-                  ) : (
-
-                    <div className="grid grid-cols-1 gap-4">
-                      {obras.map((obra) => (
-                        <Link
-                          key={obra._id}
-                          to={`/obra/${obra._id}`}
-                          className="flex flex-col sm:flex-row gap-4 border border-gray-100 rounded-2xl p-4 bg-white hover:shadow-md transition items-center"
-                        >
-                          {obra.portada && (
-                            <div className="w-full sm:w-28 h-40 shrink-0 mx-auto sm:mx-0">
-                              <img 
-                                src={obra.portada}
-                                alt={obra.titulo}
-                                className="w-full h-full object-cover rounded-xl shadow-xs"
-                              />
-                            </div>
-                          )}
-
-                          <div className="flex-1 min-w-0 space-y-1">
-                            <h3 className="text-sm font-black text-[#2c3e50] tracking-tight truncate">
-                              {obra.titulo}
-                            </h3>
-
-                            <p className="text-xs text-gray-500 font-medium leading-relaxed line-clamp-3">
-                              {obra.sinopsis}
-                            </p>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-
-                  )}
+                  <div className="space-y-1">
+                    <p className="text-xs font-black text-[#2c3e50] uppercase tracking-wide">Perfil de moderación</p>
+                    <p className="text-xs text-gray-400 font-medium leading-relaxed">Este usuario forma parte del equipo de moderación de la plataforma.</p>
+                  </div>
 
                 </div>
-              );
-            })()}
+
+              ) : obras.length === 0 ? (
+
+                <div className="flex-1 flex flex-col items-center justify-center text-center max-w-sm mx-auto space-y-3 py-6">
+
+                  <div className="w-10 h-10 bg-gray-50 border border-gray-100 rounded-xl flex items-center justify-center text-gray-300">
+                    <FaBookOpen size={16} />
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-xs font-black text-[#2c3e50] uppercase tracking-wide">Sin publicaciones actuales</p>
+                    <p className="text-xs text-gray-400 font-medium leading-relaxed">Este autor no ha compartido obras aprobadas todavía.</p>
+                  </div>
+
+                </div>
+
+              ) : (
+
+                <div className="grid grid-cols-1 gap-4">
+                  {obras.map((obra) => (
+                    <button
+                      key={obra._id}
+                      type="button"
+                      onClick={() => setObraModal(obra)}
+                      className="group text-left w-full flex gap-4 border border-gray-100 rounded-2xl p-4 bg-white hover:shadow-lg transition items-center"
+                    >
+                      <div className="relative w-28 h-28 sm:w-36 sm:h-36 flex-shrink-0 overflow-hidden bg-gray-100 shadow-sm rounded-md">
+                        {obra.portada ? (
+                          <img src={obra.portada} alt={obra.titulo} className="w-full h-full object-contain bg-white" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300">Sin imagen</div>
+                        )}
+                        {/* removed overlay/title to show clean square cover */}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-black text-[#2c3e50] tracking-tight truncate mb-1">{obra.titulo}</h3>
+                        <p className="text-xs text-gray-500 font-medium leading-relaxed line-clamp-3 mb-3">{obra.sinopsis}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-gray-400">{obra.fechaPublicacion ? new Date(obra.fechaPublicacion).toLocaleDateString('es-EC') : ''}</span>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+              )}
+
+              {/* Modal para previsualizar obra (solo en perfil público) */}
+              {obraModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/70 p-4">
+                  <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl border border-gray-100 overflow-hidden grid grid-cols-1 md:grid-cols-3">
+                    <div className="md:col-span-1 relative h-64 md:h-auto flex items-center justify-center bg-gray-50">
+                      {obraModal.portada ? (
+                        <img src={obraModal.portada} alt={obraModal.titulo} className="max-w-full max-h-full object-contain" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300">Sin portada</div>
+                      )}
+                      <button onClick={() => setObraModal(null)} className="absolute top-3 right-3 bg-white/80 text-gray-600 p-2 rounded-full hover:bg-white">Cerrar</button>
+                    </div>
+                    <div className="md:col-span-2 p-6 space-y-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-2xl font-black text-[#2c3e50]">{obraModal.titulo}</h3>
+                          <p className="text-sm text-gray-500 mt-1">{obraModal.autor || `${usuario.nombres} ${usuario.apellidos}`}</p>
+                        </div>
+                        <div className="text-right">
+                          {/* estado and club link removed for public profile preview */}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <h4 className="text-xs font-black uppercase text-gray-400 mb-2">Sinopsis</h4>
+                          <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{obraModal.sinopsis}</div>
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black uppercase text-gray-400 mb-2">Prólogo</h4>
+                          <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{obraModal.prologo}</div>
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t">
+                        <div className="text-sm text-gray-500 font-medium">Previsualización de la obra.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
 
           </div>
         </div>

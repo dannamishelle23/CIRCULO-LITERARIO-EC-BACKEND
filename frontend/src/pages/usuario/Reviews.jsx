@@ -14,7 +14,8 @@ import {
   createComentario, 
   editComentario, 
   deleteComentario 
-} from "../services/comentarioService"; 
+} from "../../services/comentarioService"; 
+import { obtenerObra } from "../../services/obraService";
 
 export default function Reviews() {
   const { obraId } = useParams();
@@ -26,16 +27,23 @@ export default function Reviews() {
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState("");
   const [cargando, setCargando] = useState(false);
-  
-  // Obtenemos la fecha de publicación pasada por navigate en la pantalla anterior
-  const fechaPublicacion = location.state?.fechaPublicacion;
+  const [obra, setObra] = useState(null);
+  const [fechaPublicacion, setFechaPublicacion] = useState(location.state?.fechaPublicacion ?? null);
+  const [buscandoPublicacion, setBuscandoPublicacion] = useState(false);
+  const [publicacionCargada, setPublicacionCargada] = useState(false);
 
   // Validar si pasaron las 2 semanas (14 días)
   const isExpired = () => {
-    if (!fechaPublicacion) return true;
-    const limite = new Date(fechaPublicacion);
-    limite.setDate(limite.getDate() + 14);
-    return new Date() > limite;
+    if (fechaPublicacion) {
+      const limite = new Date(fechaPublicacion);
+      limite.setDate(limite.getDate() + 14);
+      return new Date() > limite;
+    }
+    return obra?.estado !== "Publicada";
+  };
+
+  const isAvailable = () => {
+    return !buscandoPublicacion && publicacionCargada;
   };
 
   const cargarComentarios = async () => {
@@ -48,8 +56,32 @@ export default function Reviews() {
   };
 
   useEffect(() => {
+    const obtenerFecha = async () => {
+      if (fechaPublicacion && obra) {
+        setPublicacionCargada(true);
+        return;
+      }
+
+      try {
+        setBuscandoPublicacion(true);
+        const res = await obtenerObra(obraId);
+        if (res.ok && res.obra) {
+          setObra(res.obra);
+          if (res.obra.fechaPublicacion) {
+            setFechaPublicacion(res.obra.fechaPublicacion);
+          }
+        }
+      } catch (error) {
+        console.error("Error al obtener fecha de publicación:", error);
+      } finally {
+        setBuscandoPublicacion(false);
+        setPublicacionCargada(true);
+      }
+    };
+
     cargarComentarios();
-  }, [obraId]);
+    obtenerFecha();
+  }, [obraId, fechaPublicacion, obra]);
 
   const handleCrear = async (e) => {
     e.preventDefault();
@@ -124,9 +156,11 @@ export default function Reviews() {
             <MdChatBubbleOutline className="text-amber-500" /> Foro de Debate de la Lectura
           </h1>
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            {isExpired() 
-              ? "El tiempo de debate (2 semanas) ha finalizado. Solo puedes visualizar los comentarios." 
-              : "Deja tus impresiones, dudas o reseñas sobre la obra. Espacio disponible por 2 semanas."}
+            {buscandoPublicacion
+              ? "Cargando información de la lectura..."
+              : isExpired()
+                ? "El tiempo de debate (2 semanas) ha finalizado. Solo puedes visualizar los comentarios."
+                : "Deja tus impresiones, dudas o reseñas sobre la obra. Espacio disponible por 2 semanas."}
           </p>
         </div>
 

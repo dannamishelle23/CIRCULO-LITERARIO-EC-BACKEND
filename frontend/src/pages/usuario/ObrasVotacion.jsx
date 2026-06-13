@@ -29,6 +29,7 @@ export default function ObrasVotacion() {
   const [activeTab, setActiveTab] = useState("votacion")
   const [obrasVotacion, setObrasVotacion] = useState([])
   const [obrasPublicadas, setObrasPublicadas] = useState([])
+  const [votacionCerrada, setVotacionCerrada] = useState(false)
   const [accionCargando, setAccionCargando] = useState(null)
   
   const [obraModal, setObraModal] = useState(null)
@@ -38,15 +39,25 @@ export default function ObrasVotacion() {
       setLoading(true)
       
       if (activeTab === "votacion") {
-        const res = await obtenerObrasVotacionClub(clubId)
-        const listaBruta = Array.isArray(res) ? res : (res.obras || [])
-        
-        const obrasConVoto = listaBruta.map(obra => ({
-          ...obra,
-          yaVotado: !!obra.yaVotado
-        }));
+          const res = await obtenerObrasVotacionClub(clubId)
 
-        setObrasVotacion(obrasConVoto)
+          // Si el backend indica que la votación está cerrada por lectura publicada
+          if (res && res.votacionCerrada) {
+            setVotacionCerrada(true)
+            setObrasVotacion([])
+            // mostrar mensaje informativo
+            toast.info(res.msg || "La votación está cerrada hasta finalizar la lectura actual.")
+          } else {
+            setVotacionCerrada(false)
+            const listaBruta = Array.isArray(res) ? res : (res.obras || [])
+
+            const obrasConVoto = listaBruta.map(obra => ({
+              ...obra,
+              yaVotado: !!obra.yaVotado
+            }));
+
+            setObrasVotacion(obrasConVoto)
+          }
         
         if (obraModal) {
           const obraActualizada = obrasConVoto.find(o => o._id === obraModal._id);
@@ -103,7 +114,7 @@ export default function ObrasVotacion() {
       <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center font-sans">
         <div className="text-center">
           <div className="w-10 h-10 border-4 border-[#e67e22] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-xs font-bold uppercase tracking-widest text-[#2c3e50]">Sincronizando biblioteca...</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-[#2c3e50]">Cargando contenido...</p>
         </div>
       </div>
     )
@@ -132,14 +143,16 @@ export default function ObrasVotacion() {
 
         <div className="flex bg-white p-1.5 rounded-2xl border border-gray-100 shadow-2xs gap-1">
           <button
-            onClick={() => setActiveTab("votacion")}
+            onClick={() => { if (!votacionCerrada) setActiveTab("votacion") }}
             className={`flex-1 py-3.5 text-xs font-black uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition cursor-pointer ${
               activeTab === "votacion"
                 ? "bg-[#2c3e50] text-white shadow-md scale-[1.02]"
-                : "text-gray-500 hover:bg-gray-50"
+                : (votacionCerrada ? "text-gray-300 cursor-not-allowed" : "text-gray-500 hover:bg-gray-50")
             }`}
+          disabled={votacionCerrada}
           >
             <MdHowToVote size={18} /> Obras en Votación
+            {votacionCerrada && <span className="ml-2 text-[10px] font-bold text-gray-400">(cerrada)</span>}
           </button>
           <button
             onClick={() => setActiveTab("publicadas")}

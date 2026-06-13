@@ -245,7 +245,7 @@ export default function MisObras() {
 
                   {/* ACCIONES */}
                   <div className="md:col-span-1 flex flex-col gap-2 justify-center">
-                    {obra.estado === "Borrador" || obra.estado === "Rechazada" ? (
+                    {obra.estado === "Borrador" ? (
                       <>
                         <button
                           onClick={() => {
@@ -265,7 +265,7 @@ export default function MisObras() {
                       </>
                     ) : (
                       <button
-                        onClick={() => navigate(`/obra/${obra._id}`)}
+                        onClick={() => navigate(`/mis-obras/${obra._id}`)}
                         className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition text-sm font-bold"
                       >
                         <MdCheckCircle size={16} /> Ver

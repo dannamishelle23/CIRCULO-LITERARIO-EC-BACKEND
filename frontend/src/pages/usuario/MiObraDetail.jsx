@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { obtenerObra, postularObra } from "../../services/obraService";
+import { obtenerObra, actualizarObra, postularObra } from "../../services/obraService";
 import {
   getCapitulos,
   createCapitulo,
@@ -35,6 +35,18 @@ export default function MiObraDetail() {
   });
 
   const [editando, setEditando] = useState(null);
+  const [metaForm, setMetaForm] = useState({
+    titulo: "",
+    sinopsis: "",
+    prologo: "",
+    subgenero: "",
+  });
+  const [metaPortada, setMetaPortada] = useState(null);
+  const [metaPortadaPreview, setMetaPortadaPreview] = useState(null);
+  const [editingMeta, setEditingMeta] = useState(false);
+  const [metaMessage, setMetaMessage] = useState("");
+  const [metaType, setMetaType] = useState("success");
+  const [metaLoading, setMetaLoading] = useState(false);
 
   useEffect(() => {
     cargarData();
@@ -47,6 +59,16 @@ export default function MiObraDetail() {
       const capsRes = await getCapitulos(id);
 
       setObra(obraRes.obra);
+      if (obraRes.obra) {
+        setMetaForm({
+          titulo: obraRes.obra.titulo || "",
+          sinopsis: obraRes.obra.sinopsis || "",
+          prologo: obraRes.obra.prologo || "",
+          subgenero: obraRes.obra.subgenero || "",
+        });
+        setMetaPortada(null);
+        setMetaPortadaPreview(obraRes.obra.portada || null);
+      }
       
       // Ordenar capítulos numéricamente
       const capsOrdenados = (capsRes.capitulos || []).sort(
@@ -86,6 +108,60 @@ export default function MiObraDetail() {
     setEditando(null);
   };
 
+  const handleMetaChange = (e) => {
+    const { name, value } = e.target;
+    setMetaForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleMetaPortadaChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setMetaPortada(file);
+      const reader = new FileReader();
+      reader.onload = (event) => setMetaPortadaPreview(event.target.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmitMeta = async (e) => {
+    e.preventDefault();
+    if (!metaForm.titulo.trim() || !metaForm.sinopsis.trim() || !metaForm.prologo.trim()) {
+      setMetaMessage("Título, sinopsis y prólogo son obligatorios.");
+      setMetaType("error");
+      return;
+    }
+
+    try {
+      setMetaLoading(true);
+      const payload = {
+        titulo: metaForm.titulo,
+        sinopsis: metaForm.sinopsis,
+        prologo: metaForm.prologo,
+        subgenero: metaForm.subgenero,
+      };
+      if (metaPortada) {
+        payload.portada = metaPortada;
+      }
+      const res = await actualizarObra(id, payload);
+
+      if (res.ok) {
+        setMetaMessage("Obra actualizada correctamente.");
+        setMetaType("success");
+        setEditingMeta(false);
+        await cargarData();
+      } else {
+        setMetaMessage(res.msg || "Error al actualizar la obra.");
+        setMetaType("error");
+      }
+    } catch (err) {
+      console.error(err);
+      setMetaMessage(err.response?.data?.msg || "Error al actualizar la obra.");
+      setMetaType("error");
+    } finally {
+      setMetaLoading(false);
+    }
+  };
+
   const handleDelete = async (capId) => {
     if (!window.confirm("¿Seguro que quieres eliminar este capítulo?")) return;
     try {
@@ -110,6 +186,8 @@ export default function MiObraDetail() {
 
   const tieneCapitulosMinimos = capitulos.length >= 3;
   const puedePostular = obra?.estado === "Borrador" && tieneCapitulosMinimos;
+  const puedeEditarMeta = obra && !["EnRevision", "EnVotacion", "Publicada"].includes(obra.estado);
+  const puedeEditarCapitulos = obra && !["EnRevision", "EnVotacion", "Publicada"].includes(obra.estado);
 
   if (loading) {
     return (
@@ -178,11 +256,131 @@ export default function MiObraDetail() {
                 {obra.titulo}
               </h1>
 
-              <p className="text-xs text-gray-500 line-clamp-3 font-medium pt-1">
+              <p className="text-xs text-gray-500 font-medium pt-1">
                 {obra.sinopsis || "Sin sinopsis registrada."}
               </p>
             </div>
           </div>
+        </div>
+
+        {/* METADATOS DE OBRA */}
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-2xs space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-[#2c3e50]">Sinopsis</p>
+              <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+                {obra.sinopsis || "Sin sinopsis registrada."}
+              </p>
+            </div>
+            {puedeEditarMeta && (
+              <button
+                type="button"
+                onClick={() => setEditingMeta((prev) => !prev)}
+                className="text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl border border-[#e67e22] bg-[#e67e22] text-white hover:bg-orange-600 transition"
+              >
+                {editingMeta ? "Cancelar" : "Editar Obra"}
+              </button>
+            )}
+          </div>
+
+          <div>
+            <p className="text-xs font-black uppercase tracking-widest text-[#2c3e50]">Prólogo</p>
+            <p className="mt-2 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+              {obra.prologo || "Sin prólogo registrado."}
+            </p>
+          </div>
+
+          {editingMeta && puedeEditarMeta && (
+            <form onSubmit={handleSubmitMeta} className="space-y-4 pt-4 border-t border-gray-100">
+              {metaMessage && (
+                <div className={`rounded-2xl p-3 text-sm ${metaType === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-red-50 text-red-700 border border-red-100"}`}>
+                  {metaMessage}
+                </div>
+              )}
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">Título</label>
+                  <input
+                    name="titulo"
+                    value={metaForm.titulo}
+                    onChange={handleMetaChange}
+                    className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:border-[#e67e22]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">Sinopsis</label>
+                  <textarea
+                    name="sinopsis"
+                    rows={3}
+                    value={metaForm.sinopsis}
+                    onChange={handleMetaChange}
+                    className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:border-[#e67e22]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">Prólogo</label>
+                  <textarea
+                    name="prologo"
+                    rows={4}
+                    value={metaForm.prologo}
+                    onChange={handleMetaChange}
+                    className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:border-[#e67e22]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">Subgénero</label>
+                  <input
+                    name="subgenero"
+                    value={metaForm.subgenero}
+                    onChange={handleMetaChange}
+                    placeholder="Ej: Fantasía épica, Realismo mágico"
+                    className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:border-[#e67e22]"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">Portada</label>
+                  <div className="rounded-2xl border border-gray-200 overflow-hidden bg-gray-100 h-28 flex items-center justify-center">
+                    {metaPortadaPreview ? (
+                      <img
+                        src={metaPortadaPreview}
+                        alt="Portada obra"
+                        className="h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-xs text-gray-500 uppercase tracking-widest">
+                        Cargar portada
+                      </div>
+                    )}
+                  </div>
+                  <label className="inline-flex items-center justify-center w-full px-4 py-3 rounded-2xl border border-dashed border-gray-300 bg-white text-xs font-black uppercase tracking-widest text-[#2c3e50] cursor-pointer hover:bg-gray-50 transition">
+                    Seleccionar portada
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleMetaPortadaChange}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingMeta(false)}
+                  className="rounded-2xl border border-gray-200 px-4 py-2 text-xs font-black uppercase tracking-widest text-gray-600 hover:bg-gray-50 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={metaLoading}
+                  className="rounded-2xl bg-[#e67e22] px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-orange-600 transition disabled:opacity-50"
+                >
+                  {metaLoading ? "Guardando..." : "Guardar cambios"}
+                </button>
+              </div>
+            </form>
+          )}
         </div>
 
         {/* CONTENIDO PRINCIPAL */}
@@ -191,7 +389,7 @@ export default function MiObraDetail() {
           {/* COLUMNA IZQUIERDA: FORMULARIO */}
           <div className="lg:col-span-2 space-y-6">
             
-            {obra.estado === "Borrador" ? (
+            {puedeEditarCapitulos ? (
               <form 
                 onSubmit={handleSubmitCap}
                 className={`bg-white p-6 rounded-2xl border transition-all shadow-2xs space-y-4 ${
@@ -270,7 +468,7 @@ export default function MiObraDetail() {
                   Edición Deshabilitada
                 </p>
                 <p className="text-xs text-gray-400 font-medium max-w-sm mx-auto mt-1">
-                  La obra está en revisión por moderación y no admite cambios actuales.
+                  La obra está en {obra.estado === "EnRevision" ? "revisión" : obra.estado === "EnVotacion" ? "votación" : "publicada"} y no admite cambios.
                 </p>
               </div>
             )}

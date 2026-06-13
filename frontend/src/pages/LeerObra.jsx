@@ -9,18 +9,21 @@ import {
   MdList, 
   MdFormatSize, 
   MdDarkMode,
-  MdLightMode
+  MdLightMode,
+  MdChatBubbleOutline
 } from "react-icons/md"
 import { getCapitulos } from "../services/capituloService"
+import { obtenerObra } from "../services/obraService"
 
 export default function LeerObra() {
-  const { obraId } = useParams()
+  const { obraId, id: clubId } = useParams()
   const navigate = useNavigate()
   const contenidoRef = useRef(null)
 
   const [loading, setLoading] = useState(true)
   const [capitulos, setCapitulos] = useState([])
-  const [currentIndex, setCurrentIndex] = useState(0) 
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [obra, setObra] = useState(null)
   
   // Estados para personalización de lectura
   const [theme, setTheme] = useState("light") // "light", "sepia", "dark"
@@ -29,22 +32,31 @@ export default function LeerObra() {
   const [progress, setProgress] = useState(0) // Progreso de lectura de la página
 
   useEffect(() => {
-    const cargarCapitulos = async () => {
+    const cargarLectura = async () => {
       try {
         setLoading(true)
-        const res = await getCapitulos(obraId)
-        if (res.ok && res.capitulos) {
-          const capsOrdenados = res.capitulos.sort((a, b) => a.numeroCapitulo - b.numeroCapitulo)
+
+        const [obraRes, capRes] = await Promise.all([
+          obtenerObra(obraId),
+          getCapitulos(obraId)
+        ])
+
+        if (obraRes.ok && obraRes.obra) {
+          setObra(obraRes.obra)
+        }
+
+        if (capRes.ok && capRes.capitulos) {
+          const capsOrdenados = capRes.capitulos.sort((a, b) => a.numeroCapitulo - b.numeroCapitulo)
           setCapitulos(capsOrdenados)
         }
       } catch (error) {
-        console.error("Error al cargar capítulos:", error)
-        toast.error("No se pudieron cargar los capítulos de la obra")
+        console.error("Error al cargar la obra o los capítulos:", error)
+        toast.error("No se pudo cargar la obra o los capítulos.")
       } finally {
         setLoading(false)
       }
     }
-    cargarCapitulos()
+    cargarLectura()
   }, [obraId])
 
   // Scroll al inicio y reseteo de barra al cambiar de capítulo
@@ -181,6 +193,17 @@ export default function LeerObra() {
                 <button onClick={() => setTheme("dark")} className="px-4 py-2 hover:bg-slate-50 text-left cursor-pointer flex items-center justify-between">Oscuro <span className="w-4 h-4 rounded-full border border-slate-700 bg-slate-950"></span></button>
               </div>
             </div>
+
+            {obra?.estado === "Publicada" && (
+              <button
+                onClick={() => navigate(`/clubes/${clubId}/reviews/${obraId}`, {
+                  state: { fechaPublicacion: obra.fechaPublicacion }
+                })}
+                className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider px-3 py-2 rounded-xl transition cursor-pointer bg-emerald-600 text-white hover:bg-emerald-500 shadow-sm"
+              >
+                <MdChatBubbleOutline size={18} /> Reseñas
+              </button>
+            )}
 
             {/* Botón de Índice (Menú lateral de caps) */}
             <button 

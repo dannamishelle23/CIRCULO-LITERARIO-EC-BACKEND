@@ -7,6 +7,7 @@ export default function ObraForm({ clubId, onSubmit, editingObra, onCancel, isLo
     titulo: "",
     sinopsis: "",
     prologo: "",
+    subgenero: "",
     club: clubId || ""
   });
 
@@ -51,6 +52,7 @@ export default function ObraForm({ clubId, onSubmit, editingObra, onCancel, isLo
         titulo: editingObra.titulo || "",
         sinopsis: editingObra.sinopsis || "",
         prologo: editingObra.prologo || "",
+        subgenero: editingObra.subgenero || "",
         club: editingObra.club?._id || editingObra.club || ""
       });
       if (editingObra.portada) {
@@ -146,6 +148,19 @@ export default function ObraForm({ clubId, onSubmit, editingObra, onCancel, isLo
               onChange={handleChange}
               placeholder="Resumen breve de tu obra..."
               rows="4"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#e67e22]"
+            />
+          </div>
+
+          {/* SUBGÉNERO */}
+          <div>
+            <label className="block text-sm font-bold text-[#2c3e50] mb-2">Subgénero</label>
+            <input
+              type="text"
+              name="subgenero"
+              value={form.subgenero}
+              onChange={handleChange}
+              placeholder="Ej: Fantasía épica, Realismo mágico"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#e67e22]"
             />
           </div>

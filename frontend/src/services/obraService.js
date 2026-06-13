@@ -10,6 +10,9 @@ export const crearObra = async (datosObra) => {
     formData.append("sinopsis", datosObra.sinopsis);
     formData.append("prologo", datosObra.prologo);
     formData.append("club", datosObra.club);
+    if (datosObra.subgenero) {
+      formData.append("subgenero", datosObra.subgenero);
+    }
 
     if (datosObra.portada) {
       formData.append("portada", datosObra.portada);
@@ -53,7 +56,7 @@ export const listarObrasPublicasAutor = async (autorId) => {
 };
 
 /*==========================================================================
-| OBRAS DEL CLUB (TODAS VISIBLES SEGÚN REGLAS BACKEND)
+| OBRAS DEL CLUB
 ==========================================================================*/
 export const listarObrasClub = async (clubId) => {
   try {
@@ -109,7 +112,24 @@ export const listarObrasAprobadas = async (clubId) => {
 ==========================================================================*/
 export const actualizarObra = async (id, datosObra) => {
   try {
-    const response = await api.put(`/obras/${id}`, datosObra);
+    let payload = datosObra;
+    const config = {};
+
+    if (datosObra?.portada instanceof File || datosObra?.portada?.name) {
+      payload = new FormData();
+      payload.append("titulo", datosObra.titulo);
+      payload.append("sinopsis", datosObra.sinopsis);
+      payload.append("prologo", datosObra.prologo);
+      if (datosObra.subgenero) {
+        payload.append("subgenero", datosObra.subgenero);
+      }
+      if (datosObra.portada) {
+        payload.append("portada", datosObra.portada);
+      }
+      config.headers = { "Content-Type": "multipart/form-data" };
+    }
+
+    const response = await api.put(`/obras/${id}`, payload, config);
     return response.data;
   } catch (error) {
     console.error("Error actualizar obra:", error);
@@ -188,10 +208,7 @@ export const iniciarVotacion = async (clubId, obrasIds) => {
 ==========================================================================*/
 export const cerrarVotacion = async (clubId) => {
   try {
-    const response = await api.post(
-      `/obras/club/${clubId}/cerrar-votacion`
-    );
-
+    const response = await api.post(`/obras/club/${clubId}/cerrar-votacion`);
     return response.data;
   } catch (error) {
     console.error("Error cerrar votación:", error);
@@ -217,7 +234,6 @@ export const votarObra = async (id) => {
 ==========================================================================*/
 export const obtenerObrasVotacionClub = async (clubId) => {
   try {
-    // Ajusta la ruta si en tu backend la ruta es diferente (ej: `/obras/obras-votacion/${clubId}`)
     const response = await api.get(`/obras/obras-votacion/${clubId}`);
     return response.data;
   } catch (error) {
@@ -231,7 +247,6 @@ export const obtenerObrasVotacionClub = async (clubId) => {
 ==========================================================================*/
 export const obtenerObrasPublicadasClub = async (clubId) => {
   try {
-    // Ajusta la ruta según tu backend (ej: `/obras/obras-publicadas/${clubId}`)
     const response = await api.get(`/obras/obras-publicadas/${clubId}`);
     return response.data;
   } catch (error) {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getModeratorById, getUserById } from "../services/userService";
+import { listarObrasPublicasAutor } from "../services/obraService";
 import { 
   MdArrowBack, 
   MdMail, 
@@ -17,6 +18,8 @@ export default function UserDetail() {
   const { id, tipo } = useParams();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [obras, setObras] = useState([]);
+  const [obraModal, setObraModal] = useState(null);
 
   const fetchUser = async () => {
     try {
@@ -27,6 +30,13 @@ export default function UserDetail() {
         data = await getUserById(id);
       }
       setUser(data);
+      // Cargar obras públicas/aprobadas del usuario para mostrar en detalle
+      try {
+        const resp = await listarObrasPublicasAutor(id);
+        setObras(resp.obras || []);
+      } catch (err) {
+        setObras([]);
+      }
     } catch (error) {
       console.error(error);
     }
@@ -167,6 +177,55 @@ export default function UserDetail() {
 
           </div>
 
+          {/* SECCIÓN: Obras del usuario (aprobadas / publicadas) */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 mt-6">
+            <h4 className="text-xs font-black uppercase tracking-widest text-[#2c3e50] mb-4">Obras del usuario</h4>
+            {obras.length === 0 ? (
+              <p className="text-xs text-gray-400">No hay obras aprobadas o publicadas.</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-3">
+                {obras.map(o => (
+                  <button key={o._id} onClick={() => setObraModal(o)} className="text-left w-full flex gap-4 items-center p-3 border rounded-xl hover:shadow-sm transition">
+                    <div className="w-16 h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                      {o.portada ? <img src={o.portada} alt={o.titulo} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-300">No imagen</div>}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-black text-[#2c3e50] truncate">{o.titulo}</p>
+                      <p className="text-xs text-gray-500 line-clamp-2">{o.sinopsis}</p>
+                    </div>
+                    <div className="text-[10px] font-black text-gray-400 uppercase">{o.estado}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {obraModal && (
+            <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/60 p-4">
+              <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border overflow-hidden">
+                <div className="flex items-center justify-between p-4 border-b">
+                  <h3 className="text-lg font-black text-[#2c3e50]">{obraModal.titulo}</h3>
+                  <button onClick={() => setObraModal(null)} className="text-gray-400 hover:text-red-500">Cerrar</button>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div className="flex gap-4">
+                    <div className="w-36 h-48 bg-gray-100 rounded overflow-hidden">
+                      {obraModal.portada ? <img src={obraModal.portada} alt="portada" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-300">Sin portada</div>}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-600 mb-2">{obraModal.sinopsis}</p>
+                      <p className="text-xs text-gray-400">Estado: {obraModal.estado}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-gray-400 uppercase mb-2">Prólogo</h4>
+                    <div className="text-sm text-gray-600 whitespace-pre-line">{obraModal.prologo}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* GRILLA DE DATOS DETALLADOS */}
           <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50/30 border-t border-gray-50">
             
@@ -212,7 +271,7 @@ export default function UserDetail() {
               </div>
               <div className="min-w-0 flex-1">
                 <span className="block text-[9px] font-black uppercase tracking-wider text-gray-400">Rol Asignado</span>
-                <span className="text-xs font-bold text-[#2c3e50] block truncate mt-0.5 uppercase tracking-wide text-[#e67e22]">
+                <span className="text-xs font-bold block truncate mt-0.5 uppercase tracking-wide text-[#e67e22]">
                   {user.rol}
                 </span>
               </div>
