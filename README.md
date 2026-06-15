@@ -48,6 +48,8 @@ Cloudinary
 
 # Estructura del Proyecto
 
+Para el desarrollo de cada módulo se ha utilizado Visual Studio Code junto con el lenguaje JavaScript. La integración del framework Express con el patrón arquitectónico MVC ha permitido estructurar el servidor de forma eficiente para gestionar las peticiones a través de los endpoints. En la siguiente imagen se detalla la organización de las carpetas y archivos que componen el proyecto.
+
 <img width="194" height="307" alt="image" src="https://github.com/user-attachments/assets/f40886d7-cb21-46af-89c8-0a569d96acac" />
 
 ---
