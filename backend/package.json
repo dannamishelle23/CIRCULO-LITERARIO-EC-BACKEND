@@ -13,7 +13,7 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "supertest": "^6.4.0",
+    "supertest": "^7.1.1",
     "vitest": "^1.1.5"
   },
   "dependencies": {
