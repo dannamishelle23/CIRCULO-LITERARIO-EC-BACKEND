@@ -16,6 +16,7 @@ const crearAdmin = async () => {
 
         const admin = new Usuario({
             nombres: process.env.ADMIN_NOMBRES,
+            apellidos: process.env.ADMIN_APELLIDOS,
             fechaNacimiento: process.env.ADMIN_FECHA_NACIMIENTO,
             provincia: process.env.ADMIN_PROVINCIA,
             ciudad: process.env.ADMIN_CIUDAD,
