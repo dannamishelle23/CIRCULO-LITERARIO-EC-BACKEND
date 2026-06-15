@@ -84,6 +84,19 @@ const sendMailToRecoveryPassword = (userMail, token) => {
 //Correo enviado a los moderadores para proporcionarles sus credenciales de acceso
 const sendMailToCreateModerator = (userMail, userName, password) => {
     const urlLogin = `${process.env.URL_FRONTEND}/login`;
+    const textBody = `Bienvenido al equipo de Moderación.
+
+Se te ha asignado un rol de moderador y estas son tus credenciales de acceso:
+
+Nombre de usuario: ${userName}
+Correo electrónico: ${userMail}
+Contraseña temporal: ${password}
+
+Ingresa al sistema en: ${urlLogin}
+
+Te recomendamos cambiar tu contraseña una vez que hayas ingresado por primera vez desde tu perfil.
+
+Círculo Literario EC`;
 
     return sendMail(
         userMail,
@@ -123,7 +136,8 @@ const sendMailToCreateModerator = (userMail, userName, password) => {
                 <p style="margin: 5px 0;">Panel Administrativo / Moderación</p>
             </div>
         </div>
-        `
+        `,
+        textBody
     );
 };
 

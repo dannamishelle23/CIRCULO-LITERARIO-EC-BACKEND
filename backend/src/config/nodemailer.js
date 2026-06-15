@@ -17,18 +17,21 @@ const transporter = nodemailer.createTransport({
   debug: true
 })
 
-const sendMail = async (to, subject, html) => {
+const sendMail = async (to, subject, html, text = '') => {
   try {
     const info = await transporter.sendMail({
       from: `${process.env.BREVO_FROM_NAME} <${process.env.BREVO_FROM_EMAIL}>`,
       to,
       subject,
+      text,
       html,
+      replyTo: process.env.BREVO_FROM_EMAIL
     })
 
     console.log("Email enviado:", info.messageId)
+    return info
   } catch (error) {
-    console.error("Error enviando correo:", error.message)
+    console.error("Error enviando correo:", error)
     throw error
   }
 }

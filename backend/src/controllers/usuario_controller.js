@@ -327,16 +327,28 @@ const registrarModerador = async (req, res) => {
 
     await nuevoModerador.save()
 
-    //Enviar credenciales
-    await sendMailToCreateModerator(
-      email,
-      username,
-      "MOD-" + passwordTemporal
-    )
+    let emailSent = true
+    let mailInfo = null
+
+    try {
+      mailInfo = await sendMailToCreateModerator(
+        email,
+        username,
+        "MOD-" + passwordTemporal
+      )
+      console.log('Mail info', mailInfo)
+    } catch (mailError) {
+      emailSent = false
+      console.error("Error enviando correo de moderador:", mailError)
+    }
 
     res.status(200).json({
       success: true,
-      message: "Moderador registrado correctamente.",
+      message: emailSent
+        ? "Moderador registrado correctamente."
+        : "Moderador registrado correctamente, pero no se pudo enviar el correo de credenciales.",
+      emailSent,
+      mailInfo,
       data: {
         moderador: nuevoModerador
       }
