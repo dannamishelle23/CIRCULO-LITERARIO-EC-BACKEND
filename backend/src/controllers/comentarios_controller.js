@@ -30,9 +30,14 @@ export const agregarComentarioObra = async (req, res) => {
       return res.status(404).json({ msg: "La obra no está disponible para comentarios." });
     }
 
+    const fechaPublicacionObra = obra.fechaPublicacion || obra.createdAt;
+    if (!fechaPublicacionObra) {
+      return res.status(400).json({ msg: "No se puede determinar el periodo de debate porque falta la fecha de publicación de la obra." });
+    }
+
     // Calcular si pasaron 2 semanas (14 días)
-    const fechaLimite = new Date(obra.fechaPublicacion);
-    fechaLimite.setDate(fechaLimite.getDate() + 14); 
+    const fechaLimite = new Date(fechaPublicacionObra);
+    fechaLimite.setDate(fechaLimite.getDate() + 14);
 
     if (new Date() > fechaLimite) {
       return res.status(400).json({ 
@@ -48,8 +53,6 @@ export const agregarComentarioObra = async (req, res) => {
     });
 
     await nuevoComentario.save();
-
-    // Poblamos para devolver el usuario y responder limpio
     const comentarioPoblado = await nuevoComentario.populate('usuario', 'nombres apellidos avatar username');
 
     res.status(201).json({ 
@@ -87,7 +90,12 @@ export const editarComentarioObra = async (req, res) => {
     }
 
     // Calcular si pasaron 2 semanas (14 días) desde la publicación
-    const fechaLimite = new Date(comentario.obra.fechaPublicacion);
+    const fechaPublicacionObra = comentario.obra.fechaPublicacion || comentario.obra.createdAt;
+    if (!fechaPublicacionObra) {
+      return res.status(400).json({ msg: "No se puede determinar el periodo de debate porque falta la fecha de publicación de la obra." });
+    }
+
+    const fechaLimite = new Date(fechaPublicacionObra);
     fechaLimite.setDate(fechaLimite.getDate() + 14);
 
     if (new Date() > fechaLimite) {
@@ -137,7 +145,12 @@ export const eliminarComentarioObra = async (req, res) => {
     }
 
     // Calcular si pasaron 2 semanas (14 días) desde la publicación
-    const fechaLimite = new Date(comentario.obra.fechaPublicacion);
+    const fechaPublicacionObra = comentario.obra.fechaPublicacion || comentario.obra.createdAt;
+    if (!fechaPublicacionObra) {
+      return res.status(400).json({ msg: "No se puede determinar el periodo de debate porque falta la fecha de publicación de la obra." });
+    }
+
+    const fechaLimite = new Date(fechaPublicacionObra);
     fechaLimite.setDate(fechaLimite.getDate() + 14);
 
     if (new Date() > fechaLimite) {

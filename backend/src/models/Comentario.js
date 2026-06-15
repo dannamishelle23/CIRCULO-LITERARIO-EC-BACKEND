@@ -4,12 +4,12 @@ import mongoose from 'mongoose';
 const comentarioSchema = new mongoose.Schema({
   obra: { 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Obra', 
+    ref: 'Obras', 
     required: true 
   },
   usuario: { 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Usuario', 
+    ref: 'Usuarios', 
     required: true 
   },
   texto: { 
