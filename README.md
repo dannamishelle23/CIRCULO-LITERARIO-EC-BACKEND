@@ -33,17 +33,8 @@ El sistema implementa control de acceso basado en roles (Admin, Moderador, Lecto
 - **Vitest** - Testing unitario
 - **Multer** - Manejo de archivos
 
-### Frontend
-- **React 18** - Librería UI
-- **React Router** - Enrutamiento
-- **Axios** - Cliente HTTP
-- **Tailwind CSS** - Estilos
-- **React Toastify** - Notificaciones
-- **Vite** - Build tool
-
 ### Herramientas de Despliegue
 - **Render** - Backend hosting
-- **Netlify** - Frontend hosting
 - **MongoDB Atlas** - Base de datos cloud
 - **Cloudinary** - CDN de imágenes
 
@@ -162,27 +153,6 @@ npm run dev
 ```
 
 El backend estará disponible en `http://localhost:3000`
-
-### Frontend (Local)
-
-1. **Navegar a la carpeta frontend:**
-```bash
-cd ../frontend
-```
-
-2. **Instalar dependencias:**
-```bash
-npm install
-```
-
-3. **Ejecutar servidor de desarrollo:**
-```bash
-npm run dev
-```
-
-El frontend estará disponible en `http://localhost:5173`
-
----
 
 ## 🌐 Despliegue en Producción
 
