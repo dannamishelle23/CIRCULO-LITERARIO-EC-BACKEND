@@ -172,29 +172,9 @@ El backend estará disponible en `http://localhost:3000`
    - `BREVO_FROM_EMAIL` - Email remitente
    - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
    - `JWT_SECRET` - Secreto JWT (generado aleatorio, diferente a local)
-   - `URL_FRONTEND=https://circuloliterarioec.netlify.app` (sin `/home`)
+   - `URL_FRONTEND=https://circuloliterarioec.netlify.app` 
 
 3. **Deploy automático** - Se activa con cada push a `main`
-
-### Frontend en Netlify
-
-1. **Conectar repositorio en Netlify:**
-   - Conectar GitHub
-   - Seleccionar rama `main`
-   - Build Command: `npm run build`
-   - Publish Directory: `dist`
-
-2. **Configurar variables de entorno:**
-   - `VITE_API_URL=https://tu-backend-render.onrender.com/api` (URL del backend)
-
-3. **Verificar archivo `_redirects`:**
-   - Debe existir `frontend/public/_redirects` con:
-   ```
-   /* /index.html 200
-   ```
-   Esto permite que React Router maneje todas las rutas dinámicas.
-
-4. **Deploy automático** - Se activa con cada push a `main`
 
 ---
 
@@ -328,13 +308,6 @@ El sistema usa **Brevo (anteriormente Sendinblue)** para envío de emails vía R
 
 ### "Email no confirma cuenta"
 - Verificar que `BREVO_API_KEY` sea válida
-- Revisar que `URL_FRONTEND` no tenga `/home` al final
-- Asegurarse que `_redirects` exista en `frontend/public/`
-
-### "No puedo desplegar en Netlify"
-- Verificar que `_redirects` esté en `public/`
-- Revisar que `VITE_API_URL` apunte al backend correcto
-- Hacer rebuild manual en Netlify dashboard
 
 ### "Imágenes no se cargan"
 - Verificar credenciales de Cloudinary
@@ -385,7 +358,7 @@ Para más información sobre el proyecto, visita:
 ## 👩‍💻 Créditos y Agradecimientos
 
 ### Autora Principal
-**Danna López** - Desarrolladora Full Stack
+**Danna López** - Desarrolladora
 - Diseño y desarrollo del sistema completo
 - Gestión de base de datos
 - Integración de APIs
@@ -395,12 +368,11 @@ Para más información sobre el proyecto, visita:
 
 Un profundo agradecimiento a:
 
-💝 **Gabriela** - Mi mejor amiga, por su apoyo incondicional, motivación constante y ser mi mayor impulsora en este proyecto.
+💝 **Gabriela Ayala** - Mi mejor amiga, por su apoyo incondicional, motivación constante y ser mi mayor impulsora en este proyecto.
 
 🤝 **Todas las personas que colaboraron y probaron este proyecto:**
 - Contribuidores que revisaron código
-- Testers que reportaron bugs
-- Diseñadores que aportaron feedback
+- A las personas que aportaron feedback
 - Toda la comunidad ecuatoriana de lectores y autores que inspiraron esta plataforma
 
 Este proyecto es un esfuerzo colaborativo dedicado a promover la literatura ecuatoriana y crear una comunidad vibrante de escritores emergentes.
