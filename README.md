@@ -93,19 +93,7 @@ Circulo-Literario-EC-new/
 │   │   └── server.js                  (Configuración Express)
 │   ├── .env                           (Variables de entorno)
 │   └── package.json
-│
-└── frontend/
-    ├── src/
-    │   ├── pages/                     (Componentes de páginas)
-    │   ├── components/                (Componentes reutilizables)
-    │   ├── context/                   (Context API)
-    │   ├── services/                  (Llamadas API)
-    │   ├── utils/                     (Funciones auxiliares)
-    │   ├── App.jsx                    (Rutas principales)
-    │   └── main.jsx                   (Punto de entrada)
-    ├── public/
-    │   └── _redirects                 (Configuración Netlify)
-    └── package.json
+
 ```
 
 ---
