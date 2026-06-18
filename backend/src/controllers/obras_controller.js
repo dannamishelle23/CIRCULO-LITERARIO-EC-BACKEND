@@ -448,6 +448,9 @@ export const iniciarVotacion = async (req, res) => {
     const club = await Club.findById(clubId);
 
     if (!club) return res.status(404).json({ msg: "Club no encontrado." });
+    if (club.estadoClub !== "Activo") {
+      return res.status(403).json({ msg: "Club suspendido. No se puede iniciar votación." });
+    }
 
     const esModerador = club.moderadores.some(
       m => m.toString() === req.usuarioHeader._id.toString()
@@ -478,6 +481,16 @@ export const iniciarVotacion = async (req, res) => {
     const fin = new Date();
     fin.setDate(fin.getDate() + 7);
 
+    // Validar que la fecha de inicio sea anterior a la de fin
+    if (inicio >= fin) {
+      return res.status(400).json({ msg: "Fechas de votación inválidas." });
+    }
+
+    // Validar que el club esté activo
+    if (club.estadoClub !== "Activo") {
+      return res.status(403).json({ msg: "Club suspendido. No se puede iniciar votación." });
+    }
+
     await Obra.updateMany(
       { _id: { $in: obrasIds } },
       {
@@ -487,7 +500,7 @@ export const iniciarVotacion = async (req, res) => {
       }
     );
 
-    res.status(200).json({ ok: true, obras });
+    res.status(200).json({ ok: true, msg: "Votación iniciada", obras });
 
   } catch (error) {
     console.error(error);
@@ -727,5 +740,58 @@ export const obtenerObrasPublicadasClub = async (req, res) => {
   } catch (error) {
     console.error("Error al obtener obras publicadas:", error);
     res.status(500).json({ msg: "Error al obtener obras publicadas." });
+  }
+};
+
+/* =========================
+   ELIMINAR OBRA
+========================= */
+export const eliminarObra = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const obra = await Obra.findById(id);
+
+    if (!obra) {
+      return res.status(404).json({ msg: "Obra no encontrada." });
+    }
+
+    // Solo el autor o un admin pueden eliminar
+    if (obra.autor.toString() !== req.usuarioHeader._id.toString() && req.usuarioHeader.rol !== "Administrador") {
+      return res.status(403).json({ msg: "No tienes permiso para eliminar esta obra." });
+    }
+
+    // No se puede eliminar si está en votación o publicada
+    // En EnRevision SÍ se puede (el usuario puede arrepentirse)
+    if (["EnVotacion", "Publicada"].includes(obra.estado)) {
+      return res.status(400).json({
+        msg: `No puedes eliminar una obra en estado ${obra.estado}.`
+      });
+    }
+
+    // Eliminar portada de Cloudinary si existe
+    if (obra.portadaID) {
+      try {
+        await eliminarImagenCloudinary(obra.portadaID);
+      } catch (error) {
+        console.error("Error eliminando imagen de Cloudinary:", error);
+      }
+    }
+
+    // Eliminar capítulos asociados
+    await Capitulo.deleteMany({ obra: id });
+
+    // Soft delete: marcar como inactivo
+    obra.activo = false;
+    await obra.save();
+
+    res.status(200).json({
+      ok: true,
+      msg: "Obra eliminada correctamente."
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: "Error al eliminar obra." });
   }
 };

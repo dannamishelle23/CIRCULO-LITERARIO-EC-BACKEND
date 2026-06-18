@@ -35,7 +35,7 @@ describe('auth_validator', () => {
         fechaNacimiento: '2015-01-01',
         provincia: 'Pichincha',
         email: 'juan@example.com',
-        username: '_invalid__',
+        username: '_testuser',
         password: 'weak'
       }
     }

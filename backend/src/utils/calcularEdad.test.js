@@ -21,8 +21,4 @@ describe('calcularEdad', () => {
     const edad = calcularEdad(fechaProxima.toISOString())
     expect(edad).toBe(24)
   })
-
-  bench('rendimiento de calcularEdad', () => {
-    calcularEdad('2000-06-14')
-  })
 })

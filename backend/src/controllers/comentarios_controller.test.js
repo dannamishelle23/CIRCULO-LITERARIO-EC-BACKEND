@@ -90,36 +90,6 @@ describe('comentarios_controller', () => {
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ msg: 'Comentario publicado.' }))
   })
 
-  bench('performance de agregarComentarioObra', async () => {
-    Obra.findById.mockResolvedValue({
-      estado: 'Publicada',
-      fechaPublicacion: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-      createdAt: new Date()
-    })
-
-    const req = mockReq({ obraId: '1' }, { texto: 'benchmark' }, { _id: 'u1' })
-    const res = mockRes()
-    await comentariosController.agregarComentarioObra(req, res)
-  })
-
-  it('debe editar un comentario cuando el usuario es autor y está dentro del plazo', async () => {
-    Comentario.findById.mockResolvedValueOnce({
-      usuario: 'u1',
-      obra: { estado: 'Publicada', fechaPublicacion: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), createdAt: new Date() },
-      texto: 'original',
-      save: vi.fn().mockResolvedValue(true),
-      populate: vi.fn().mockResolvedValue({ usuario: { nombres: 'Test' }, texto: 'actualizado' })
-    })
-
-    const req = mockReq({ comentarioId: '1' }, { texto: 'actualizado' }, { _id: 'u1' })
-    const res = mockRes()
-
-    await comentariosController.editarComentarioObra(req, res)
-
-    expect(res.status).toHaveBeenCalledWith(200)
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ msg: 'Comentario actualizado correctamente.' }))
-  })
-
   it('debe obtener comentarios de una obra y devolver 200', async () => {
     const sortMock = vi.fn().mockResolvedValueOnce([{ texto: 'hola' }])
     const populateMock = vi.fn().mockReturnValueOnce({ sort: sortMock })

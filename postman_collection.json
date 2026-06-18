@@ -1,0 +1,1492 @@
+{
+  "info": {
+    "name": "Círculo Literario EC API",
+    "_postman_id": "c1af0e90-0000-0000-0000-000000000000",
+    "description": "Colección Postman para la API de Círculo Literario EC. Incluye ejemplos de request y response para los módulos principales.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://circulo-literario-ec-backend.onrender.com/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Gestionar cuentas",
+      "item": [
+        {
+          "name": "Registro",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombres\": \"Danna Mishelle\",\n  \"apellidos\": \"Lopez Chamorro\",\n  \"fechaNacimiento\": \"2003-07-13\",\n  \"provincia\": \"Pichincha\",\n  \"username\": \"Danna_Mishelle\",\n  \"email\": \"dannamishelle.53@gmail.com\",\n  \"password\": \"Danna2026@\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/registro",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "registro"
+              ]
+            },
+            "description": "Registra un nuevo usuario (lector o autor). No requiere autenticación."
+          },
+          "response": [
+            {
+              "name": "Registro exitoso",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombres\": \"Danna Mishelle\",\n  \"apellidos\": \"Lopez Chamorro\",\n  \"fechaNacimiento\": \"2003-07-13\",\n  \"provincia\": \"Pichincha\",\n  \"username\": \"Danna_Mishelle\",\n  \"email\": \"dannamishelle.53@gmail.com\",\n  \"password\": \"Danna2026@\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/auth/registro"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"msg\": \"Usuario registrado. Revisa tu correo para confirmar tu cuenta.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Confirmar cuenta",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/auth/confirmar/:token",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "confirmar",
+                ":token"
+              ]
+            },
+            "description": "Confirma el email tras el registro usando el token enviado por correo."
+          },
+          "response": [
+            {
+              "name": "Confirmación exitosa",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"msg\": \"¡Cuenta confirmada exitosamente! Ya puedes iniciar sesión.\",\n  \"usuario\": {\n    \"email\": \"dannamishelle.53@gmail.com\",\n    \"username\": \"Danna_Mishelle\",\n    \"confirmEmail\": true\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Reenviar correo de confirmación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"dannamishelle.53@gmail.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/reenviar-confirmacion",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "reenviar-confirmacion"
+              ]
+            },
+            "description": "Reenvía el correo de confirmación al email registrado."
+          },
+          "response": [
+            {
+              "name": "Reenvío exitoso",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"msg\": \"Correo de confirmación reenviado. Revisa tu buzón.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"Danna_Mishelle\",\n  \"password\": \"Danna2026@\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicia sesión con usuario/email y contraseña. Devuelve token JWT."
+          },
+          "response": [
+            {
+              "name": "Login exitoso",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"msg\": \"Inicio de sesión exitoso.\",\n  \"usuario\": {\n    \"_id\": \"64a...\",\n    \"token\": \"eyJhbGci...\",\n    \"nombres\": \"Danna Mishelle\",\n    \"apellidos\": \"Lopez Chamorro\",\n    \"username\": \"Danna_Mishelle\",\n    \"email\": \"dannamishelle.53@gmail.com\",\n    \"rol\": \"Usuario\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Recuperar contraseña",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"dannamishelle.53@gmail.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/recuperar-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "recuperar-password"
+              ]
+            },
+            "description": "Solicita el envío de un correo para restablecer la contraseña."
+          },
+          "response": [
+            {
+              "name": "Email de recuperación enviado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"msg\": \"Si el usuario existe, recibirás un correo electrónico para reestablecer tu contraseña.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Validar token de recuperación",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/auth/recuperar-password/:token",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "recuperar-password",
+                ":token"
+              ]
+            },
+            "description": "Verifica el token de recuperación recibido por correo."
+          },
+          "response": [
+            {
+              "name": "Token válido",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"msg\": \"Token confirmado, ya puedes crear tu nueva contraseña.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Nuevo password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"NuevaPassword123@\",\n  \"confirmPassword\": \"NuevaPassword123@\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/nuevo-password/:token",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "nuevo-password",
+                ":token"
+              ]
+            },
+            "description": "Restablece la contraseña usando el token de recuperación."
+          },
+          "response": [
+            {
+              "name": "Password restablecido",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"msg\": \"Contraseña restablecida exitosamente. Ya puedes iniciar sesión.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Gestionar usuarios",
+      "item": [
+        {
+          "name": "Mi perfil",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/usuario/perfil",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "usuario",
+                "perfil"
+              ]
+            },
+            "description": "Obtiene los datos del usuario autenticado. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Perfil usuario",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"ok\": true,\n  \"usuario\": {\n    \"_id\": \"64a...\",\n    \"nombres\": \"Danna Mishelle\",\n    \"apellidos\": \"Lopez Chamorro\",\n    \"username\": \"Danna_Mishelle\",\n    \"email\": \"dannamishelle.53@gmail.com\",\n    \"rol\": \"Usuario\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Perfil público de usuario",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/usuario/perfil/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "usuario",
+                "perfil",
+                ":id"
+              ]
+            },
+            "description": "Obtiene la información pública de un usuario por su ID. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Perfil público",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"ok\": true,\n  \"usuario\": {\n    \"_id\": \"64a...\",\n    \"nombres\": \"Gabriela\",\n    \"apellidos\": \"Sayala\",\n    \"username\": \"gabrielasayala25\",\n    \"avatar\": \"https://...\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Actualizar perfil",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombres\": \"Danna\",\n  \"apellidos\": \"Lopez\",\n  \"provincia\": \"Pichincha\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/usuario/actualizar-perfil/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "usuario",
+                "actualizar-perfil",
+                ":id"
+              ]
+            },
+            "description": "Actualiza los datos personales del usuario autenticado. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Perfil actualizado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"ok\": true,\n  \"msg\": \"Perfil actualizado correctamente.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Actualizar password",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"passwordActual\": \"Danna2026@\",\n  \"passwordNuevo\": \"NuevaPass2026@\",\n  \"confirmPasswordNuevo\": \"NuevaPass2026@\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/usuario/actualizar-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "usuario",
+                "actualizar-password"
+              ]
+            },
+            "description": "Cambia la contraseña del usuario autenticado. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Password actualizado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"ok\": true,\n  \"msg\": \"Contraseña actualizada correctamente.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar usuarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/usuario/listar-usuarios",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "usuario",
+                "listar-usuarios"
+              ]
+            },
+            "description": "Lista todos los usuarios. Requiere JWT: moderador o administrador."
+          },
+          "response": [
+            {
+              "name": "Listado de usuarios",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"ok\": true,\n  \"msg\": \"Usuarios obtenidos correctamente\",\n  \"usuarios\": [\n    {\n      \"_id\": \"64a...\",\n      \"nombres\": \"Gabriela\",\n      \"apellidos\": \"Sayala\",\n      \"username\": \"gabrielasayala25\",\n      \"rol\": \"Moderador\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Gestión de Clubes",
+      "item": [
+        {
+          "name": "Crear club",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Club de Fantasía\",\n  \"descripcion\": \"Club para leer autores de fantasía ecuatoriana.\",\n  \"generoLiterario\": \"Fantasía\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/club/crear-club",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "club",
+                "crear-club"
+              ]
+            },
+            "description": "Crea un club literario. Requiere JWT y suele ser solo para administrador."
+          },
+          "response": [
+            {
+              "name": "Club creado",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"msg\": \"Club literario creado con éxito.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar clubes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/club/listar-clubes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "club",
+                "listar-clubes"
+              ]
+            },
+            "description": "Lista todos los clubes literarios. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Clubes obtenidos",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"ok\": true,\n  \"msg\": \"Clubes obtenidos correctamente\",\n  \"clubes\": [\n    {\n      \"_id\": \"64b...\",\n      \"nombre\": \"Club de Fantasía\",\n      \"generoLiterario\": \"Fantasía\",\n      \"estadoClub\": \"Activo\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Detalle club",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/club/detalle-club/:clubId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "club",
+                "detalle-club",
+                ":clubId"
+              ]
+            },
+            "description": "Obtiene la información de un club por su ID. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Detalle de club",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"ok\": true,\n  \"msg\": \"Info del club obtenida correctamente\",\n  \"club\": {\n    \"_id\": \"64b...\",\n    \"nombre\": \"Club de Fantasía\",\n    \"generoLiterario\": \"Fantasía\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Asignar moderador",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/club/asignar-moderador/:clubId/:moderadorId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "club",
+                "asignar-moderador",
+                ":clubId",
+                ":moderadorId"
+              ]
+            },
+            "description": "Asigna un moderador a un club. Requiere JWT y administrador."
+          },
+          "response": [
+            {
+              "name": "Moderador asignado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"msg\": \"Moderador asignado al club con éxito.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Mis clubes asignados",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/club/mis-clubes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "club",
+                "mis-clubes"
+              ]
+            },
+            "description": "Lista los clubes asignados al moderador autenticado. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Mis clubes",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"ok\": true,\n  \"clubes\": [\n    {\n      \"_id\": \"64b...\",\n      \"nombre\": \"Club de Fantasía\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Actualizar club",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Club de Fantasía Nueva\",\n  \"descripcion\": \"Club mejorado para autores emergentes.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/club/actualizar-club/:clubId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "club",
+                "actualizar-club",
+                ":clubId"
+              ]
+            },
+            "description": "Actualiza los datos de un club. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Club actualizado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"msg\": \"Club actualizado correctamente.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Gestión de Membresía",
+      "item": [
+        {
+          "name": "Solicitar unión al club",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clubMiembros/unirse/:clubId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clubMiembros",
+                "unirse",
+                ":clubId"
+              ]
+            },
+            "description": "Solicita unirse a un club. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Solicitud enviada",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"msg\": \"Solicitud enviada al club. Espera a que el moderador la apruebe.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar solicitudes de club",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clubMiembros/solicitudes/:clubId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clubMiembros",
+                "solicitudes",
+                ":clubId"
+              ]
+            },
+            "description": "Lista las solicitudes de unión al club. Requiere JWT y moderador."
+          },
+          "response": [
+            {
+              "name": "Solicitudes del club",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"solicitudes\": [\n    {\n      \"_id\": \"64c...\",\n      \"usuario\": \"64d...\",\n      \"estadoSolicitud\": \"Pendiente\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Aprobar solicitud",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clubMiembros/aprobar/:solicitudId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clubMiembros",
+                "aprobar",
+                ":solicitudId"
+              ]
+            },
+            "description": "Aprueba una solicitud de unión al club. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Solicitud aprobada",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"msg\": \"Solicitud aprobada. El usuario ya es miembro del club.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Rechazar solicitud",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clubMiembros/rechazar/:solicitudId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clubMiembros",
+                "rechazar",
+                ":solicitudId"
+              ]
+            },
+            "description": "Rechaza una solicitud de unión al club. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Solicitud rechazada",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"msg\": \"Solicitud rechazada.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Ver miembros del club",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clubMiembros/visualizar/:clubId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clubMiembros",
+                "visualizar",
+                ":clubId"
+              ]
+            },
+            "description": "Lista los miembros aprobados del club. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Miembros del club",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"miembros\": [\n    {\n      \"_id\": \"64e...\",\n      \"usuario\": \"64d...\",\n      \"estadoSolicitud\": \"Aprobado\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Mis solicitudes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clubMiembros/mis-solicitudes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clubMiembros",
+                "mis-solicitudes"
+              ]
+            },
+            "description": "Lista las solicitudes de unión del usuario autenticado. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Solicitudes del usuario",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"solicitudes\": [\n    {\n      \"_id\": \"64f...\",\n      \"club\": \"64b...\",\n      \"estadoSolicitud\": \"Pendiente\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Gestión de Obras",
+      "item": [
+        {
+          "name": "Crear obra",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "titulo",
+                  "value": "La Senda del Viento",
+                  "type": "text"
+                },
+                {
+                  "key": "sinopsis",
+                  "value": "Una novela de realismo mágico ecuatoriano.",
+                  "type": "text"
+                },
+                {
+                  "key": "prologo",
+                  "value": "En el inicio...",
+                  "type": "text"
+                },
+                {
+                  "key": "club",
+                  "value": "64b...",
+                  "type": "text"
+                },
+                {
+                  "key": "subgenero",
+                  "value": "Realismo mágico",
+                  "type": "text"
+                },
+                {
+                  "key": "portada",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/obras",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "obras"
+              ]
+            },
+            "description": "Crea una obra dentro del club. Requiere JWT. Use multipart/form-data; el campo 'portada' (file) es obligatorio para la portada de la obra."
+          },
+          "response": [
+            {
+              "name": "Obra creada",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"ok\": true,\n  \"obra\": {\n    \"_id\": \"650...\",\n    \"titulo\": \"La Senda del Viento\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Obras en votación",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/obras/obras-votacion/:clubId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "obras",
+                "obras-votacion",
+                ":clubId"
+              ]
+            },
+            "description": "Lista las obras en votación del club. Requiere JWT y pertenecer al club."
+          },
+          "response": [
+            {
+              "name": "Obras en votación",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"obras\": [\n    {\n      \"_id\": \"650...\",\n      \"titulo\": \"La Senda del Viento\",\n      \"estado\": \"EnVotacion\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Obras publicadas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/obras/obras-publicadas/:clubId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "obras",
+                "obras-publicadas",
+                ":clubId"
+              ]
+            },
+            "description": "Lista las obras publicadas del club. Requiere JWT y pertenecer al club."
+          },
+          "response": [
+            {
+              "name": "Obras publicadas",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"obras\": [\n    {\n      \"_id\": \"650...\",\n      \"titulo\": \"La Senda del Viento\",\n      \"estado\": \"Publicada\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Obras públicas por autor",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/obras/autor/:autorId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "obras",
+                "autor",
+                ":autorId"
+              ]
+            },
+            "description": "Lista las obras públicas de un autor por su ID. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Obras públicas de autor",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"obras\": [\n    {\n      \"_id\": \"650...\",\n      \"titulo\": \"La Senda del Viento\",\n      \"estado\": \"Publicada\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Obra por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/obras/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "obras",
+                ":id"
+              ]
+            },
+            "description": "Obtiene una obra por su ID. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Detalle de obra",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"ok\": true,\n  \"obra\": {\n    \"_id\": \"650...\",\n    \"titulo\": \"La Senda del Viento\",\n    \"estado\": \"Publicada\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Actualizar obra",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"La Senda del Viento - Edición\",\n  \"sinopsis\": \"Versión corregida de la sinopsis.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/obras/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "obras",
+                ":id"
+              ]
+            },
+            "description": "Actualiza una obra (solo el autor de la obra). Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Obra actualizada",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"ok\": true,\n  \"msg\": \"Obra actualizada correctamente.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Postular obra",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/obras/:id/postular",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "obras",
+                ":id",
+                "postular"
+              ]
+            },
+            "description": "Envía la obra a revisión para moderador. Requiere JWT y ser autor."
+          },
+          "response": [
+            {
+              "name": "Postulación enviada",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"ok\": true,\n  \"msg\": \"Enviada a revisión\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Votar obra",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/obras/:id/votar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "obras",
+                ":id",
+                "votar"
+              ]
+            },
+            "description": "Vota una obra para lectura. Requiere JWT y ser miembro del club."
+          },
+          "response": [
+            {
+              "name": "Voto registrado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"msg\": \"Voto registrado correctamente.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Capítulos",
+      "item": [
+        {
+          "name": "Crear capítulo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Capítulo 1\",\n  \"contenido\": \"Primera parte de la obra\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/capitulos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "capitulos",
+                ":id"
+              ]
+            },
+            "description": "Crea un capítulo dentro de una obra. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Capítulo creado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"ok\": true,\n  \"capitulo\": {\n    \"_id\": \"651...\",\n    \"titulo\": \"Capítulo 1\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar capítulos de obra",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/capitulos/obra/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "capitulos",
+                "obra",
+                ":id"
+              ]
+            },
+            "description": "Lista los capítulos de una obra. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Listado de capítulos",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"capitulos\": [\n    {\n      \"_id\": \"651...\",\n      \"titulo\": \"Capítulo 1\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Detalle capítulo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/capitulos/detalle/:capituloId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "capitulos",
+                "detalle",
+                ":capituloId"
+              ]
+            },
+            "description": "Obtiene un capítulo por su ID. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Capítulo",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"capitulo\": {\n    \"_id\": \"651...\",\n    \"titulo\": \"Capítulo 1\",\n    \"contenido\": \"Primera parte...\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Editar capítulo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Capítulo 1 editado\",\n  \"contenido\": \"Texto actualizado\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/capitulos/:capituloId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "capitulos",
+                ":capituloId"
+              ]
+            },
+            "description": "Edita un capítulo existente. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Capítulo editado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"ok\": true,\n  \"msg\": \"Capítulo editado correctamente.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Eliminar capítulo",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/capitulos/:capituloId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "capitulos",
+                ":capituloId"
+              ]
+            },
+            "description": "Elimina un capítulo existente. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Capítulo eliminado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"ok\": true,\n  \"msg\": \"Capítulo eliminado correctamente.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Comentarios",
+      "item": [
+        {
+          "name": "Obtener comentarios de obra",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/comentarios/obra/:obraId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "comentarios",
+                "obra",
+                ":obraId"
+              ]
+            },
+            "description": "Obtiene los comentarios de una obra. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Comentarios de obra",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"comentarios\": [\n    {\n      \"_id\": \"652...\",\n      \"usuario\": \"Danna_Mishelle\",\n      \"comentario\": \"Me encantó esta obra.\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Agregar comentario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comentario\": \"Excelente capítulo.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/comentarios/obra/:obraId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "comentarios",
+                "obra",
+                ":obraId"
+              ]
+            },
+            "description": "Agrega un comentario a una obra. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Comentario agregado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"msg\": \"Comentario agregado correctamente.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Editar comentario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comentario\": \"Comentario actualizado.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/comentarios/obra/:obraId/comentario/:comentarioId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "comentarios",
+                "obra",
+                ":obraId",
+                "comentario",
+                ":comentarioId"
+              ]
+            },
+            "description": "Edita un comentario propio en una obra. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Comentario editado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"msg\": \"Comentario editado correctamente.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Eliminar comentario",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/comentarios/obra/:obraId/comentario/:comentarioId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "comentarios",
+                "obra",
+                ":obraId",
+                "comentario",
+                ":comentarioId"
+              ]
+            },
+            "description": "Elimina un comentario propio en una obra. Requiere JWT."
+          },
+          "response": [
+            {
+              "name": "Comentario eliminado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"msg\": \"Comentario eliminado correctamente.\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

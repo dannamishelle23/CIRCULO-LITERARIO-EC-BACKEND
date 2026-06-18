@@ -15,7 +15,8 @@ import {
   listarMisObrasClub,
   obtenerObrasVotacionClub,
   obtenerObrasPublicadasClub,
-  votarObra
+  votarObra,
+  eliminarObra
 } from "../controllers/obras_controller.js";
 
 import { verificarTokenJWT } from "../middlewares/JWT.js";
@@ -40,6 +41,9 @@ router.get("/:id",verificarTokenJWT,obtenerObra);
 
 //ACTUALIZAR OBRA (SOLO TITULO, PORTADA, SINOPSIS Y PROLOGO)
 router.put("/:id",verificarTokenJWT,verificarAutorObra,actualizarObra);
+
+//ELIMINAR OBRA (SOLO EN BORRADOR O EN REVISIÓN)
+router.delete("/:id",verificarTokenJWT,verificarAutorObra,eliminarObra);
 
 //POSTULAR OBRA (PASA A REVISION POR EL MODERADOR)
 router.post("/:id/postular",verificarTokenJWT,verificarAutorObra,postularObra);
