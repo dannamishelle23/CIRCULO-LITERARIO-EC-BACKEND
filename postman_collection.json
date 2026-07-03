@@ -140,6 +140,29 @@
         },
         {
           "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.usuario && jsonData.usuario.token) {",
+                  "    pm.environment.set('token', jsonData.usuario.token);",
+                  "    pm.collectionVariables.set('token', jsonData.usuario.token);",
+                  "    pm.globals.set('token', jsonData.usuario.token);",
+                  "    pm.test('Token JWT guardado en environment/collection/global', function () {",
+                  "        pm.expect(jsonData.usuario.token).to.exist;",
+                  "    });",
+                  "} else {",
+                  "    pm.test('No se encontró token en la respuesta', function () {",
+                  "        pm.expect.fail('Token ausente en respuesta de login');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
