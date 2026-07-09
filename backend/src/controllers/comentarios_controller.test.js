@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, bench } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('../models/Comentario.js', () => {
   const mockFind = vi.fn()
