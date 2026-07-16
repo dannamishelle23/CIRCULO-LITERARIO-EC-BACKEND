@@ -154,6 +154,14 @@ npm run dev
 
 El backend estará disponible en `http://localhost:3000`
 
+### Ejecutar pruebas del backend
+```bash
+cd backend
+npm test
+```
+
+La suite actual ejecuta 99 pruebas en 14 archivos de test, cubriendo controladores, middlewares y rutas de aceptación.
+
 ## 🌐 Despliegue en Producción
 
 ### Backend en Render

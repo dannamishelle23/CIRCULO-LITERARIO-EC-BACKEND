@@ -1,11 +1,13 @@
 # Implementación: Verificación Automática de Token de Confirmación
 
 ## Resumen
-Se ha implementado un sistema completo y robusto de verificación de tokens de confirmación de correo electrónico que:
+Se ha implementado un sistema completo y robusto de verificación de tokens de confirmación de correo electrónico y de autorización por roles para los endpoints de administración que:
 - ✅ Verifica automáticamente el token al presionar "Confirmar mi cuenta"
 - ✅ Actualiza el campo `confirmEmail` de `false` a `true` en la base de datos
 - ✅ Proporciona retroalimentación visual clara al usuario
 - ✅ Permite reenviar correos de confirmación si es necesario
+- ✅ Rechaza solicitudes de usuarios sin permisos con el mensaje "No tienes permisos para esta acción"
+- ✅ Asegura que los tokens JWT se interpreten correctamente y se inyecten en la petición para los middlewares de rol
 
 ---
 

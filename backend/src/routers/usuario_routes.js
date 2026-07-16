@@ -1,6 +1,7 @@
 import {Router} from 'express'
 import { perfil, perfilPublicoUsuario, actualizarPerfil, actualizarPassword, registrarModerador, listarModeradores, detalleModerador, deshabilitarModerador, listarUsuarios, detalleUsuario, suspenderUsuario, reactivarUsuario, eliminarUsuario } from '../controllers/usuario_controller.js'
 import { verificarTokenJWT } from '../middlewares/JWT.js'
+import verificarRol from '../middlewares/verificarRol.js'
 import { validarActualizarPerfil, validarMongoID, validarActualizarPassword, validarRegistrarModerador } from '../validators/usuario_validator.js'
 import { validarCampos } from '../middlewares/validar_campos.js'
 
@@ -11,16 +12,16 @@ router.patch('/actualizar-perfil/:id', verificarTokenJWT, validarMongoID, valida
 router.patch('/actualizar-password', verificarTokenJWT, validarActualizarPassword, validarCampos, actualizarPassword)
 
 //Rutas para gestionar usuarios moderadores (solo lo hace el administrador)
-router.post('/crear-moderador', verificarTokenJWT, validarRegistrarModerador, validarCampos, registrarModerador)
-router.get('/listar-moderadores', verificarTokenJWT, listarModeradores)
-router.get('/detalle-moderador/:id', verificarTokenJWT, validarMongoID, validarCampos, detalleModerador)
-router.patch('/deshabilitar-moderador/:id', verificarTokenJWT, validarMongoID, validarCampos, deshabilitarModerador)
+router.post('/crear-moderador', verificarTokenJWT, verificarRol('Administrador'), validarRegistrarModerador, validarCampos, registrarModerador)
+router.get('/listar-moderadores', verificarTokenJWT, verificarRol('Administrador'), listarModeradores)
+router.get('/detalle-moderador/:id', verificarTokenJWT, verificarRol('Administrador'), validarMongoID, validarCampos, detalleModerador)
+router.patch('/deshabilitar-moderador/:id', verificarTokenJWT, verificarRol('Administrador'), validarMongoID, validarCampos, deshabilitarModerador)
 
 //Rutas para gestionar usuarios lectores/autores 
 router.get('/listar-usuarios', verificarTokenJWT, listarUsuarios)         //Lo hace el moderador y el administrador
 router.get('/detalle-usuario/:id', verificarTokenJWT, validarMongoID, validarCampos, detalleUsuario)     //Lo hace el moderador y el administrador
-router.patch('/suspender-usuario/:id', verificarTokenJWT, validarMongoID, validarCampos, suspenderUsuario)         //Lo hace el moderador y el administrador
-router.patch('/reactivar-usuario/:id', verificarTokenJWT, validarMongoID, validarCampos, reactivarUsuario)
-router.delete('/eliminar-usuario/:id', verificarTokenJWT, validarMongoID, validarCampos, eliminarUsuario)
+router.patch('/suspender-usuario/:id', verificarTokenJWT, verificarRol('Moderador', 'Administrador'), validarMongoID, validarCampos, suspenderUsuario)
+router.patch('/reactivar-usuario/:id', verificarTokenJWT, verificarRol('Moderador', 'Administrador'), validarMongoID, validarCampos, reactivarUsuario)
+router.delete('/eliminar-usuario/:id', verificarTokenJWT, verificarRol('Administrador'), validarMongoID, validarCampos, eliminarUsuario)
 
 export default router

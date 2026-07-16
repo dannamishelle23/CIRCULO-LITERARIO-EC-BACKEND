@@ -3,7 +3,8 @@ import request from 'supertest'
 
 vi.mock('./middlewares/JWT.js', () => ({
   verificarTokenJWT: vi.fn((req, res, next) => {
-    req.usuarioHeader = { _id: 'u1', rol: 'Usuario' }
+    const rol = req.headers['x-user-role'] || 'Usuario'
+    req.usuarioHeader = { _id: 'u1', rol }
     next()
   }),
   crearTokenJWT: vi.fn().mockReturnValue('jwt-token-123')
@@ -41,20 +42,52 @@ vi.mock('./models/Usuarios.js', () => ({
 import app from './server.js'
 import Club from './models/Clubes.js'
 import Usuarios from './models/Usuarios.js'
+import { verificarTokenJWT } from './middlewares/JWT.js'
 
 const mockRequest = request(app)
 
 describe('Pruebas de aceptación - clubes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    Club.mockImplementation(function (data) {
+      Object.assign(this, data)
+      this.save = vi.fn().mockResolvedValue(this)
+      return this
+    })
+    Club.findOne.mockReset()
+    Club.find.mockReset()
+    Club.findById.mockReset()
+    Usuarios.findOne.mockReset()
+    verificarTokenJWT.mockImplementation((req, res, next) => {
+      const rol = req.headers['x-user-role'] || 'Usuario'
+      req.usuarioHeader = { _id: 'u1', rol }
+      next()
+    })
   })
 
-  it('POST /api/clubes/crear-club retorna 201 cuando se crea correctamente', async () => {
+  it('POST /api/clubes/crear-club retorna 403 para un usuario no administrador', async () => {
     Club.findOne.mockResolvedValueOnce(null)
 
     const response = await mockRequest
       .post('/api/clubes/crear-club')
       .set('authorization', 'Bearer token')
+      .send({
+        nombre: 'Club A',
+        descripcion: 'Descripción',
+        generoLiterario: 'Fantasía'
+      })
+
+    expect(response.status).toBe(403)
+    expect(response.body).toEqual({ msg: 'No tienes permisos para esta acción', rolUsuario: 'Usuario' })
+  })
+
+  it('POST /api/clubes/crear-club retorna 201 cuando el administrador crea correctamente', async () => {
+    Club.findOne.mockResolvedValueOnce(null)
+
+    const response = await mockRequest
+      .post('/api/clubes/crear-club')
+      .set('authorization', 'Bearer token')
+      .set('x-user-role', 'Administrador')
       .send({
         nombre: 'Club A',
         descripcion: 'Descripción',
@@ -100,6 +133,7 @@ describe('Pruebas de aceptación - clubes', () => {
     const response = await mockRequest
       .post('/api/clubes/crear-club')
       .set('authorization', 'Bearer token')
+      .set('x-user-role', 'Administrador')
       .send({
         nombre: 'Club B',
         descripcion: 'Otra descripción',
@@ -136,10 +170,10 @@ describe('Pruebas de aceptación - clubes', () => {
       .set('authorization', 'Bearer token')
 
     expect(response.status).toBe(403)
-    expect(response.body).toEqual({ ok: false, msg: 'Solo los moderadores pueden consultar clubes asignados.' })
+    expect(response.body).toEqual({ msg: 'No tienes permisos para esta acción', rolUsuario: 'Usuario' })
   })
 
-  it('PATCH /api/clubes/actualizar-club/:clubId retorna 200 cuando se actualiza correctamente', async () => {
+  it('PATCH /api/clubes/actualizar-club/:clubId retorna 403 para un usuario no administrador', async () => {
     const clubBDD = {
       _id: 'c1',
       nombre: 'Club Viejo',
@@ -154,11 +188,31 @@ describe('Pruebas de aceptación - clubes', () => {
       .set('authorization', 'Bearer token')
       .send({ nombre: 'Club Nuevo' })
 
+    expect(response.status).toBe(403)
+    expect(response.body).toEqual({ msg: 'No tienes permisos para esta acción', rolUsuario: 'Usuario' })
+  })
+
+  it('PATCH /api/clubes/actualizar-club/:clubId retorna 200 cuando el administrador actualiza correctamente', async () => {
+    const clubBDD = {
+      _id: 'c1',
+      nombre: 'Club Viejo',
+      descripcion: 'Desc vieja',
+      save: vi.fn().mockResolvedValue(true)
+    }
+
+    Club.findById.mockResolvedValueOnce(clubBDD)
+
+    const response = await mockRequest
+      .patch('/api/clubes/actualizar-club/64a1184eb2f57700123abcde')
+      .set('authorization', 'Bearer token')
+      .set('x-user-role', 'Administrador')
+      .send({ nombre: 'Club Nuevo' })
+
     expect(response.status).toBe(200)
     expect(response.body.msg).toBe('Club actualizado correctamente.')
   })
 
-  it('PATCH /api/clubes/suspender-club/:clubId retorna 200 cuando se suspende el club', async () => {
+  it('PATCH /api/clubes/suspender-club/:clubId retorna 403 para un usuario no administrador', async () => {
     const clubBDD = {
       _id: 'c1',
       estadoClub: 'Activo',
@@ -170,6 +224,24 @@ describe('Pruebas de aceptación - clubes', () => {
     const response = await mockRequest
       .patch('/api/clubes/suspender-club/64a1184eb2f57700123abcde')
       .set('authorization', 'Bearer token')
+
+    expect(response.status).toBe(403)
+    expect(response.body).toEqual({ msg: 'No tienes permisos para esta acción', rolUsuario: 'Usuario' })
+  })
+
+  it('PATCH /api/clubes/suspender-club/:clubId retorna 200 cuando el administrador suspende el club', async () => {
+    const clubBDD = {
+      _id: 'c1',
+      estadoClub: 'Activo',
+      save: vi.fn().mockResolvedValue(true)
+    }
+
+    Club.findById.mockResolvedValueOnce(clubBDD)
+
+    const response = await mockRequest
+      .patch('/api/clubes/suspender-club/64a1184eb2f57700123abcde')
+      .set('authorization', 'Bearer token')
+      .set('x-user-role', 'Administrador')
 
     expect(response.status).toBe(200)
     expect(response.body.msg).toBe('Club suspendido correctamente.')
@@ -185,8 +257,27 @@ describe('Pruebas de aceptación - clubes', () => {
       .get('/api/clubes/mis-clubes/64a1184eb2f57700123abcde')
       .set('authorization', 'Bearer token')
 
-    expect(response.status).toBe(404)
-    expect(response.body).toEqual({ msg: 'Club no encontrado o no tienes acceso.' })
+    expect(response.status).toBe(403)
+    expect(response.body).toEqual({ msg: 'No tienes permisos para esta acción', rolUsuario: 'Usuario' })
+  })
+
+  it('PATCH /api/clubes/asignar-moderador/:clubId/:moderadorId retorna 403 para un usuario no administrador', async () => {
+    const clubBDD = {
+      _id: 'c1',
+      estadoClub: 'Activo',
+      moderadores: [],
+      save: vi.fn().mockResolvedValue(true)
+    }
+
+    Club.findById.mockResolvedValueOnce(clubBDD)
+
+    const response = await mockRequest
+      .patch('/api/clubes/asignar-moderador/64a1184eb2f57700123abcde/64a1184eb2f57700123abcf0')
+      .set('authorization', 'Bearer token')
+      .set('x-user-role', 'Moderador')
+
+    expect(response.status).toBe(403)
+    expect(response.body).toEqual({ msg: 'No tienes permisos para esta acción', rolUsuario: 'Moderador' })
   })
 
   it('PATCH /api/clubes/asignar-moderador/:clubId/:moderadorId retorna 200 cuando se asigna correctamente', async () => {
@@ -203,10 +294,29 @@ describe('Pruebas de aceptación - clubes', () => {
     const response = await mockRequest
       .patch('/api/clubes/asignar-moderador/64a1184eb2f57700123abcde/64a1184eb2f57700123abcf0')
       .set('authorization', 'Bearer token')
+      .set('x-user-role', 'Administrador')
 
     expect(response.status).toBe(200)
     expect(response.body.msg).toBe('Moderador asignado al club con éxito.')
     expect(clubBDD.moderadores).toEqual(['64a1184eb2f57700123abcf0'])
+  })
+
+  it('PATCH /api/clubes/quitar-moderador/:clubId/:moderadorId retorna 403 para un usuario no administrador', async () => {
+    const clubBDD = {
+      _id: 'c1',
+      moderadores: ['64a1184eb2f57700123abcf0'],
+      save: vi.fn().mockResolvedValue(true)
+    }
+
+    Club.findById.mockResolvedValueOnce(clubBDD)
+
+    const response = await mockRequest
+      .patch('/api/clubes/quitar-moderador/64a1184eb2f57700123abcde/64a1184eb2f57700123abcf0')
+      .set('authorization', 'Bearer token')
+      .set('x-user-role', 'Moderador')
+
+    expect(response.status).toBe(403)
+    expect(response.body).toEqual({ msg: 'No tienes permisos para esta acción', rolUsuario: 'Moderador' })
   })
 
   it('PATCH /api/clubes/quitar-moderador/:clubId/:moderadorId retorna 200 cuando se elimina correctamente', async () => {
@@ -221,6 +331,7 @@ describe('Pruebas de aceptación - clubes', () => {
     const response = await mockRequest
       .patch('/api/clubes/quitar-moderador/64a1184eb2f57700123abcde/64a1184eb2f57700123abcf0')
       .set('authorization', 'Bearer token')
+      .set('x-user-role', 'Administrador')
 
     expect(response.status).toBe(200)
     expect(response.body.msg).toBe('Moderador removido del club correctamente.')
@@ -239,6 +350,7 @@ describe('Pruebas de aceptación - clubes', () => {
     const response = await mockRequest
       .patch('/api/clubes/reactivar-club/64a1184eb2f57700123abcde')
       .set('authorization', 'Bearer token')
+      .set('x-user-role', 'Administrador')
 
     expect(response.status).toBe(200)
     expect(response.body.msg).toBe('Club reactivado correctamente.')

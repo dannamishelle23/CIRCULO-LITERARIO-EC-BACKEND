@@ -2,11 +2,11 @@
 
 ## Resumen Ejecutivo
 
-Se han implementado **32 pruebas unitarias** y **2 benchmarks de rendimiento** en el backend para validar funcionamiento correcto, validaciones y desempeño:
+Se han implementado **99 pruebas automatizadas** en el backend para validar el funcionamiento correcto, las validaciones, las rutas de aceptación y la autorización por roles:
 
-- ✅ **32/32 tests unitarios** pasando
-- ✅ **7 archivos de test** creados
-- ✅ **Cobertura**: autenticación, obras, comentarios, validadores
+- ✅ **99/99 tests** pasando en la suite actual
+- ✅ **14 archivos de test** ejecutándose
+- ✅ **Cobertura**: autenticación, clubes, usuarios, obras, comentarios, validadores y rutas HTTP
 
 ---
 
@@ -20,8 +20,8 @@ npx vitest run
 
 **Resultado esperado:**
 ```
- Test Files  7 passed (7)
-      Tests  32 passed (32)
+Test Files  14 passed (14)
+     Tests  99 passed (99)
 ```
 
 ---
@@ -318,6 +318,6 @@ Si hay problemas:
 
 ---
 
-**Última actualización:** 2024
+**Última actualización:** 2026
 **Tests totales:** 32 unitarios + 2 benchmarks
 **Estado:** ✅ Todos pasando
